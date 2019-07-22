@@ -1,7 +1,7 @@
 from Susan import *
 import numpy as np
 
-S = Susan("examples/tux/tux.png")
+S = Susan("examples/original/original.png")
 """
 i = 7
 j = 10
@@ -11,4 +11,4 @@ print(S._nbd_compare(i,j,5))
 
 #print(S.mask_nbd)
 
-S.detect_edges(1)
+S.detect_edges(10)

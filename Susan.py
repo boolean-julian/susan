@@ -1,9 +1,12 @@
 from PIL import Image
 import numpy as np
 import sys
+import multiprocessing as mp
 
+n_proc = mp.cpu_count()
 class Susan:
 	# default mask with 37 neighbors per pixel
+	"""
 	default_mask = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -13,13 +16,20 @@ class Susan:
 		[0,1,1,1,1,1,0],
 		[0,0,1,1,1,0,0]
 	], dtype='?')
-
+	"""
+	
+	default_mask = np.matrix([
+		[1,1,1],
+		[1,1,1],
+		[1,1,1]
+	], dtype="?")
+	
+	
 	# sets initial mask, file path and comparison function
 	def __init__(self, path, mask = default_mask, compare = "exp"):
 		self.load(path)
 		self._set_mask(mask)
 
-		self.compare = self._compare_exp
 		if compare == "naive":
 			self.compare = self._compare_naive
 		if compare == "exp":
