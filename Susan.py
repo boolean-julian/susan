@@ -3,11 +3,11 @@ import numpy as np
 import os
 import sys
 import multiprocessing as mp
+from numba import jit
 
 n_proc = mp.cpu_count()
 class Susan:
 	# default mask with 37 neighbors per pixel
-	"""
 	default_mask = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -24,7 +24,7 @@ class Susan:
 		[1,1,1],
 		[1,1,1]
 	], dtype="?")
-	
+	"""
 	
 	# sets initial mask, file path and comparison function
 	def __init__(self, path, mask = default_mask, compare = "exp"):
@@ -80,13 +80,18 @@ class Susan:
 					self.mask_nbd[index] = (x,y)
 					index += 1
 
-	def _compare_naive(self, a, b, t):
-		if np.abs(self.img[a] - self.img[b]) <= t:
+	@staticmethod
+	@jit(nopython=True)
+	def _compare_naive(img, a, b, t):
+		if np.abs(img[a] - img[b]) <= t:
 			return 1
 		return 0
 
-	def _compare_exp(self, a, b, t):
-		return np.exp(-((self.img[a] - self.img[b])/t)**6)
+	@staticmethod
+	@jit(nopython=True)
+	def _compare_exp(img, a, b, t):
+		return np.exp(-((img[a] - img[b])/t)**6)
+
 
 	# n from paper
 	def _nbd_compare(self, i, j, t):
@@ -95,12 +100,12 @@ class Susan:
 			x = i+r[0]
 			y = j+r[1]
 			if x >= 0 and x < self.height and y >= 0 and y < self.width:
-				s += self.compare((i,j), (x,y), t)
+				s += self.compare(self.img, (i,j), (x,y), t)
 		return s
 	
 	def detect_edges(self, t, filename = "out.png"):
 		r = self.img.copy()
-		max_response = 0
+		max_response = 1
 		#g = .75*self.nbd_size
 		
 		for i in range(self.height):
@@ -114,21 +119,36 @@ class Susan:
 		self.save(r, filename)
 
 
-	"""
-	def _nbd_compare_mp(self, start, end, t, height, width, mask_nbd, nbd_size, compare, r):
+
+
+
+
+
+
+
+	def __flatten(self, A):
+		return A.flatten()
+
+	def __unflatten(self, A):
+		uf = np.zeros((self.height, self.width))
+		for i in range(self.height):
+			for j in range(self.width):
+				uf[i,j] = A[i*self.width + j]
+		return uf
+
+	def _nbd_compare_mp(self, start, end, t):
 		for i in range(start, end):
-			print(i)
-			for j in range(width):
+			for j in range(self.width):
 				s = 0
-				for r in mask_nbd:
+				for r in self.mask_nbd:
 					x = i+r[0]
 					y = j+r[1]
-					if x >= 0 and x < height and y >= 0 and y < width:
-						s += compare((i,j), (x,y), t)
-				r[i,j] = max(0, nbd_size - s)
+					if x >= 0 and x < self.height and y >= 0 and y < self.width:
+						s += self.compare(self.img, (i,j), (x,y), t)
+				self.r[i*self.width+j] = max(0, self.nbd_size - s)
 
 	def detect_edges_mp(self, t, filename = "out.png"):
-		r = np.zeros((self.height, self.width)) # shared array for mp(???)
+		self.r = mp.Array('d',self.width*self.height) # shared array for mp(???)
 
 		n_proc = mp.cpu_count() 			# number of cores
 		chunk_size = self.height//n_proc
@@ -145,15 +165,21 @@ class Susan:
 				pivot += chunk_size
 			chunks[i+1] = pivot
 
-		jobs = [mp.Process(target = self._nbd_compare_mp, args = (chunks[i], chunks[i+1], t, self.height, self.width, self.mask_nbd, self.nbd_size, self.compare, r)) for i in range(len(chunks)-1)]
+		jobs = [mp.Process(target = self._nbd_compare_mp, args = (chunks[i], chunks[i+1], t)) for i in range(len(chunks)-1)]
 		for job in jobs:
 			job.start()
 		for job in jobs:
 			job.join()
 		
-		self.save(r, filename)
-	"""
-	
+		A = self.__unflatten(self.r)
+		max_response = max(self.r)	
+		A = A/max_response * 255
+		self.save(A, filename)
+
+
+
+
+-
 	def save(self, r, filename = "a.png"):
 		"""
 		Saves image referenced in the ConstantDenoiser object.
