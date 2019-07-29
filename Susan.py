@@ -1,5 +1,6 @@
 from PIL import Image
 import numpy as np
+import os
 import sys
 import multiprocessing as mp
 
@@ -16,8 +17,8 @@ class Susan:
 		[0,1,1,1,1,1,0],
 		[0,0,1,1,1,0,0]
 	], dtype='?')
-	"""
 	
+	"""
 	default_mask = np.matrix([
 		[1,1,1],
 		[1,1,1],
@@ -100,7 +101,8 @@ class Susan:
 	def detect_edges(self, t, filename = "out.png"):
 		r = self.img.copy()
 		max_response = 0
-		g = .75*self.nbd_size
+		#g = .75*self.nbd_size
+		
 		for i in range(self.height):
 			for j in range(self.width):
 				r[i,j] = max(0, self.nbd_size - self._nbd_compare(i,j,t))
@@ -111,6 +113,47 @@ class Susan:
 		r = r/max_response * 255
 		self.save(r, filename)
 
+
+	"""
+	def _nbd_compare_mp(self, start, end, t, height, width, mask_nbd, nbd_size, compare, r):
+		for i in range(start, end):
+			print(i)
+			for j in range(width):
+				s = 0
+				for r in mask_nbd:
+					x = i+r[0]
+					y = j+r[1]
+					if x >= 0 and x < height and y >= 0 and y < width:
+						s += compare((i,j), (x,y), t)
+				r[i,j] = max(0, nbd_size - s)
+
+	def detect_edges_mp(self, t, filename = "out.png"):
+		r = np.zeros((self.height, self.width)) # shared array for mp(???)
+
+		n_proc = mp.cpu_count() 			# number of cores
+		chunk_size = self.height//n_proc
+		remainder = self.height%n_proc
+
+		# find appropriate chunking
+		pivot = 0
+		chunks = np.uint16(np.zeros(n_proc+1))
+		for i in range(n_proc):
+			if remainder > 0:
+				pivot += chunk_size+1
+				remainder -= 1
+			else:
+				pivot += chunk_size
+			chunks[i+1] = pivot
+
+		jobs = [mp.Process(target = self._nbd_compare_mp, args = (chunks[i], chunks[i+1], t, self.height, self.width, self.mask_nbd, self.nbd_size, self.compare, r)) for i in range(len(chunks)-1)]
+		for job in jobs:
+			job.start()
+		for job in jobs:
+			job.join()
+		
+		self.save(r, filename)
+	"""
+	
 	def save(self, r, filename = "a.png"):
 		"""
 		Saves image referenced in the ConstantDenoiser object.
