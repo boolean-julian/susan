@@ -35,6 +35,12 @@ class Susan:
 			self.compare = self._compare_naive
 		if compare == "exp":
 			self.compare = self._compare_exp
+		if compare == "exp_lut":
+			self.compare = self._compare_exp_lut
+			self._exp_lut = np.zeros(1024)
+			for c in range(-511, 512):
+				self._exp_lut[c] = np.exp(-((c/10)**6))
+
 
 
 	# setters
@@ -92,6 +98,8 @@ class Susan:
 	def _compare_exp(img, a, b, t):
 		return np.exp(-((img[a] - img[b])/t)**6)
 
+	def _compare_exp_lut(self, img, a, b, t):
+		return self._exp_lut[img[a]-img[b]]
 
 	# n from paper
 	def _nbd_compare(self, i, j, t):
@@ -179,7 +187,7 @@ class Susan:
 
 
 
--
+
 	def save(self, r, filename = "a.png"):
 		"""
 		Saves image referenced in the ConstantDenoiser object.
