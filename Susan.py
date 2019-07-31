@@ -4,10 +4,12 @@ import os
 import sys
 import multiprocessing as mp
 from numba import jit
+import time
 
 n_proc = mp.cpu_count()
 class Susan:
 	# default mask with 37 neighbors per pixel
+	"""
 	default_mask = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -17,33 +19,29 @@ class Susan:
 		[0,1,1,1,1,1,0],
 		[0,0,1,1,1,0,0]
 	], dtype='?')
-	
 	"""
+	
 	default_mask = np.matrix([
 		[1,1,1],
 		[1,1,1],
 		[1,1,1]
 	], dtype="?")
-	"""
 	
 	# sets initial mask, file path and comparison function
 	def __init__(self, path, mask = default_mask, compare = "exp"):
 		self.load(path)
 		self._set_mask(mask)
 
+		self._has_lut = True
 		if compare == "naive":
 			self.compare = self._compare_naive
 		if compare == "exp":
 			self.compare = self._compare_exp
 		if compare == "exp_lut":
 			self.compare = self._compare_exp_lut
-			self._exp_lut = np.zeros(1024)
-			for c in range(-511, 512):
-				self._exp_lut[c] = np.exp(-((c/10)**6))
+			self._exp_lut = np.uint8(np.zeros(1024))
+			self._has_lut = False
 
-
-
-	# setters
 	def _set_path(self, path):
 		self.path = path
 
@@ -76,16 +74,16 @@ class Susan:
 
 	# get indices from mask
 	def _init_nbd(self):
-		self.mask_nbd = np.array([(-1,-1)]*self.nbd_size, dtype="i4")
-		index = 0
+		self.mask_nbd = []
 		for k in range(self.mask.shape[0]):
 			for l in range(self.mask.shape[1]):
 				if self.mask[k,l] == 1:
 					x = k-self.center[0]
 					y = l-self.center[1]
-					self.mask_nbd[index] = (x,y)
-					index += 1
+					self.mask_nbd.append((x,y))
 
+
+	# compare functions
 	@staticmethod
 	@jit(nopython=True)
 	def _compare_naive(img, a, b, t):
@@ -97,6 +95,11 @@ class Susan:
 	@jit(nopython=True)
 	def _compare_exp(img, a, b, t):
 		return np.exp(-((img[a] - img[b])/t)**6)
+
+	def _init_lut(self, t):
+		for c in range(-511, 512):
+			self._exp_lut[c] = np.exp(-((c/t)**6))
+		self._has_lut = True
 
 	def _compare_exp_lut(self, img, a, b, t):
 		return self._exp_lut[img[a]-img[b]]
@@ -111,29 +114,28 @@ class Susan:
 				s += self.compare(self.img, (i,j), (x,y), t)
 		return s
 	
-	def detect_edges(self, t, filename = "out.png"):
+	def detect_edges(self, t, filename = "out.png", geometric = False):
 		r = self.img.copy()
-		max_response = 1
-		#g = .75*self.nbd_size
 		
+		if not self._has_lut:
+			self._init_lut(t)
+
+		if geometric:
+			g = .75*self.nbd_size
+		else:
+			g = self.nbd_size
+
+		max_response = 1
 		for i in range(self.height):
 			for j in range(self.width):
-				r[i,j] = max(0, self.nbd_size - self._nbd_compare(i,j,t))
-				
+				r[i,j] = max(0, g - self._nbd_compare(i,j,t))
 				if r[i,j] > max_response:
 					max_response = r[i,j]
-				
-		r = r/max_response * 255
-		self.save(r, filename)
+		self.save(r/max_response*255, filename)
 
 
 
-
-
-
-
-
-
+	# multiprocessing
 	def __flatten(self, A):
 		return A.flatten()
 
@@ -144,7 +146,7 @@ class Susan:
 				uf[i,j] = A[i*self.width + j]
 		return uf
 
-	def _nbd_compare_mp(self, start, end, t):
+	def _nbd_compare_mp(self, start, end, t, g):
 		for i in range(start, end):
 			for j in range(self.width):
 				s = 0
@@ -153,18 +155,29 @@ class Susan:
 					y = j+r[1]
 					if x >= 0 and x < self.height and y >= 0 and y < self.width:
 						s += self.compare(self.img, (i,j), (x,y), t)
-				self.r[i*self.width+j] = max(0, self.nbd_size - s)
 
-	def detect_edges_mp(self, t, filename = "out.png"):
-		self.r = mp.Array('d',self.width*self.height) # shared array for mp(???)
+				self.r[i*self.width+j] = max(0, g - s)
 
-		n_proc = mp.cpu_count() 			# number of cores
+	def detect_edges_mp(self, t, filename = "out.png", geometric = False):
+		self.r = mp.Array('d',self.width*self.height) # shared array for final image (flat)
+
+		if not self._has_lut:
+			self._init_lut(t)
+
+
+		if geometric:
+			g = .75*self.nbd_size
+		else:
+			g = self.nbd_size
+
+		n_proc = mp.cpu_count()			# number of cores
 		chunk_size = self.height//n_proc
 		remainder = self.height%n_proc
 
 		# find appropriate chunking
 		pivot = 0
 		chunks = np.uint16(np.zeros(n_proc+1))
+
 		for i in range(n_proc):
 			if remainder > 0:
 				pivot += chunk_size+1
@@ -173,19 +186,20 @@ class Susan:
 				pivot += chunk_size
 			chunks[i+1] = pivot
 
-		jobs = [mp.Process(target = self._nbd_compare_mp, args = (chunks[i], chunks[i+1], t)) for i in range(len(chunks)-1)]
+		jobs = [mp.Process(
+				target = self._nbd_compare_mp,
+				args = (chunks[i], chunks[i+1], t, g))
+				for i in range(len(chunks)-1)
+		]
 		for job in jobs:
 			job.start()
 		for job in jobs:
 			job.join()
 		
 		A = self.__unflatten(self.r)
-		max_response = max(self.r)	
-		A = A/max_response * 255
+		A = A/max(self.r)*255
 		self.save(A, filename)
-
-
-
+		
 
 
 	def save(self, r, filename = "a.png"):
@@ -206,32 +220,3 @@ class Susan:
 		except:
 			print("Error: Couldn't save", filename)
 			return
-
-
-	# debug
-	"""
-	def _nbd_check(self, i, j):
-		A = self._get_nbd(i,j)
-		s = ""
-		for k in range(self.height):
-			for l in range(self.width):
-				if (k,l) in A:
-					s += "0 "
-				else:
-					s += ". "
-			s += "\n"
-
-		t = ""
-		for k in range(self.height):
-			for l in range(self.width):
-				if self.img[k,l] < 127:
-					t += "0 "
-				else:
-					t += ". "
-			t += "\n"
-
-		with open("_check.txt", "w") as text_file:
-			text_file.write("%s" % s)
-			text_file.write("\n")
-			text_file.write("%s" % t)
-	"""
