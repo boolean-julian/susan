@@ -9,7 +9,7 @@ import time
 n_proc = mp.cpu_count()
 class Susan:
 	# default mask with 37 neighbors per pixel
-	"""
+
 	default_mask = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -20,13 +20,12 @@ class Susan:
 		[0,0,1,1,1,0,0]
 	], dtype='?')
 	"""
-	
 	default_mask = np.matrix([
 		[1,1,1],
 		[1,1,1],
 		[1,1,1]
 	], dtype="?")
-	
+	"""
 	# sets initial mask, file path and comparison function
 	def __init__(self, path, mask = default_mask, compare = "exp"):
 		self.load(path)
@@ -107,12 +106,15 @@ class Susan:
 	# n from paper
 	def _nbd_compare(self, i, j, t):
 		s = 0
-		for r in self.mask_nbd:
+		direction = np.array([0]*2)
+		for r in np.array(self.mask_nbd):
 			x = i+r[0]
 			y = j+r[1]
 			if x >= 0 and x < self.height and y >= 0 and y < self.width:
-				s += self.compare(self.img, (i,j), (x,y), t)
-		return s
+				c = self.compare(self.img, (i,j), (x,y), t)
+				s += c
+				direction = direction + r * c
+		return s, direction
 	
 	def detect_edges(self, t, filename = "out.png", geometric = False):
 		r = self.img.copy()
@@ -125,15 +127,24 @@ class Susan:
 		else:
 			g = self.nbd_size
 
+		directions = np.array([[[0]*2]*self.width]*self.height)
 		max_response = 1
 		for i in range(self.height):
 			for j in range(self.width):
-				r[i,j] = max(0, g - self._nbd_compare(i,j,t))
+				a, directions[i,j] = self._nbd_compare(i,j,t)
+				r[i,j] = max(0, g-a)
+				#r[i,j] = max(0, g - self._nbd_compare(i,j,t))
 				if r[i,j] > max_response:
 					max_response = r[i,j]
 		self.save(r/max_response*255, filename)
 
+		s = ""
+		for col in directions:
+			for e in col:
+				s += str(e) + "\t"
+			s += "\n"
 
+		print(s)
 
 	# multiprocessing
 	def __flatten(self, A):
