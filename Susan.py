@@ -3,38 +3,38 @@ import sys
 import multiprocessing as mp
 from PIL import Image
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 n_proc = mp.cpu_count()
+
+_mask37_rad = 3.4
+_mask37 = np.matrix([
+		[0,0,1,1,1,0,0],
+		[0,1,1,1,1,1,0],
+		[1,1,1,1,1,1,1],
+		[1,1,1,1,1,1,1],
+		[1,1,1,1,1,1,1],
+		[0,1,1,1,1,1,0],
+		[0,0,1,1,1,0,0]
+	], dtype='?')
+
+_mask9_rad = 1.4
+_mask9 = np.matrix([
+	[1,1,1],
+	[1,1,1],
+	[1,1,1]
+], dtype="?")
+
 class Susan:
 	# default mask with 37 neighbors per pixel
 	# sets initial mask, file path and comparison function
-	def __init__(self, path, mask = "mask37", compare = "exp_lut"):
-		mask37 = np.matrix([
-			[0,0,1,1,1,0,0],
-			[0,1,1,1,1,1,0],
-			[1,1,1,1,1,1,1],
-			[1,1,1,1,1,1,1],
-			[1,1,1,1,1,1,1],
-			[0,1,1,1,1,1,0],
-			[0,0,1,1,1,0,0]
-		], dtype='?')
-		
-		mask9 = np.matrix([
-			[1,1,1],
-			[1,1,1],
-			[1,1,1]
-		], dtype="?")
-		
+	def __init__(self, path, mask = "mask37", compare = "exp_lut"):	
 		self.load(path)
 
 		if mask == "mask37":
-			self._set_mask(mask37)
-			self.mask_rad = 3.4
+			self._set_mask(_mask37)
+			self.mask_rad = _mask37_rad
 		if mask == "mask9":
-			self._set_mask(mask9)
-			self.mask_rad = 1.4
+			self._set_mask(_mask9)
+			self.mask_rad = _mask9_rad
 
 		self._has_lut = True
 		if compare == "naive":
@@ -159,55 +159,54 @@ class Susan:
 				j_cog = j_cog / usan_value
 
 				# get direction for non max suppression
-				direction = 3
+				direction = 2
 				if geometric - usan_value > 0:
 					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
 					if usan_area > diam and distance_from_cog > 1:
 						if j_cog != j:
 							direction = np.arctan((i_cog - i)/(j_cog - j))
-							#direction = np.arctan2(i_cog - i, j_cog - j)
 						else:
-							direction = 0
+							direction = np.pi/2
 					if usan_area < diam and distance_from_cog < 1:
 						direction = np.arctan(i_intra/j_intra)
-						#direction = np.arctan2(i_intra, j_intra)
 
+				
 				self.direction[i*self.width+j]	= direction
 				self.response[i*self.width+j] 	= max(0, geometric - usan_value)
 
-	_orientations = [-0.375*np.pi, -0.125*np.pi, 0.125*np.pi/8, 0.375*np.pi]
+	_orientations = [-0.375*np.pi, -0.125*np.pi, 0.125*np.pi, 0.375*np.pi]
 	def _suppress_nonmax_mp(self, start, end):
 		for i in range(start, end):
-			for j in range(self.width):
-				maxhere = True
+			if i >= 1 and i < self.height-1:
+				for j in range(1,self.width-1):
+					if self.direction != 2: 
+						maxhere = True
+						index = i*self.width+j
+						r_curr = self.response[index]
+						
+						# negative diagonal
+						if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
+							if self.response[index+1-self.width] > r_curr or self.response[index-1+self.width] > r_curr:
+								maxhere = False
+						
+						# vertical
+						elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
+							if self.response[index+1] > r_curr or self.response[index-1] > r_curr:
+								maxhere = False
+						
+						# positive diagonal
+						elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
+							if self.response[index+self.width+1] > r_curr or self.response[index-self.width-1] > r_curr:
+								maxhere = False
 
-				# negative diagonal
-				index = i*self.width+j
-				r_curr = self.response[index]
-
-				if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
-					if self.direction[index+1-self.width] > r_curr or self.direction[index-1+self.width] > r_curr:
-						maxhere = False
-				
-				# horizontal
-				elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
-					if self.response[index-1] > r_curr or self.response[index+1] > r_curr:
-						maxhere = False 
-				
-				# positive diagonal
-				elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
-					if self.response[index+self.width] > r_curr or self.response[index-self.width] < r_curr:
-						maxhere = False
-				
-				# vertical
-				else:
-					if self.response[index+self.width] > r_curr or self.response[index-self.width] < r_curr:
-						maxhere = False
-
-				# apply nonmax suppression
-				if not maxhere:
-					self.response[index] = 0
-
+						# horizontal
+						else:
+							if self.response[index+self.width] > r_curr or self.response[index-self.width] > r_curr:
+								maxhere = False
+								
+						# apply nonmax suppression
+						if not maxhere:
+							self.response[index] = 0
 
 	def __execute_and_wait(self, jobs):
 		for job in jobs:
@@ -228,13 +227,13 @@ class Susan:
 			g = self.nbd_size
 
 		n_proc = mp.cpu_count()			# number of cores
-		chunk_size = (self.height-6)//n_proc
-		remainder = (self.height-6)%n_proc
+		chunk_size = (self.height)//n_proc
+		remainder = (self.height)%n_proc
 
 		# find appropriate chunking
-		pivot = 3
+		pivot = 0
 		chunks = np.uint16(np.zeros(n_proc+1))
-		chunks[0] = pivot
+		chunks[0] = 0
 		for i in range(n_proc):
 			if remainder > 0:
 				pivot += chunk_size+1
@@ -243,31 +242,29 @@ class Susan:
 				pivot += chunk_size
 			chunks[i+1] = pivot
 
-		print(chunks)
-
-		jobs = [mp.Process(
+		cjobs = [mp.Process(
 				target = self._nbd_compare_mp,
 				args = (chunks[i], chunks[i+1], t, g))
 				for i in range(len(chunks)-1)
 		]
-		self.__execute_and_wait(jobs)
+		self.__execute_and_wait(cjobs)
 
 		if nms:
-			jobs = [mp.Process(
+			njobs = [mp.Process(
 					target = self._suppress_nonmax_mp,
 					args = (chunks[i], chunks[i+1]))
 					for i in range(len(chunks)-1)
 			]
-			self.__execute_and_wait(jobs)
-
-
-		A = self.__unflatten(self.response)
-		A = A/max(self.response)*255
-		self.save(A, filename)
+			self.__execute_and_wait(njobs)
 		
+
+		self.save(self.__unflatten(self.response)/max(self.response)*255, filename)
+		
+		"""
 		A = self.__unflatten(self.direction)
 		ax = sns.heatmap(A, linewidth=0)
 		plt.savefig("directions_"+filename)
+		"""
 		"""
 		A = self.__unflatten(self.direction)
 		A = A/max(self.response)*255
