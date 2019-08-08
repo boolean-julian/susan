@@ -1,8 +1,10 @@
 import numpy as np
 import sys
 import multiprocessing as mp
-from numba import jit
 from PIL import Image
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 n_proc = mp.cpu_count()
 class Susan:
@@ -88,16 +90,12 @@ class Susan:
 
 
 	# compare functions
-	@staticmethod
-	@jit(nopython=True)
-	def _compare_naive(img, a, b, t):
+	def _compare_naive(self, img, a, b, t):
 		if np.abs(img[a] - img[b]) <= t:
 			return 1
 		return 0
 
-	@staticmethod
-	@jit(nopython=True)
-	def _compare_exp(img, a, b, t):
+	def _compare_exp(self, img, a, b, t):
 		return np.exp(-((img[a] - img[b])/t)**6)
 
 	def _init_lut(self, t):
@@ -161,15 +159,16 @@ class Susan:
 				j_cog = j_cog / usan_value
 
 				# get direction for non max suppression
-				distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
-				direction = 100
-				if usan_area > diam and distance_from_cog > 1:
-					if j_cog != j:
-						direction = np.arctan((i_cog - i)/(j_cog - j))
-					else:
-						direction = np.pi
-				if usan_area < diam and distance_from_cog < 1:
-					direction = np.arctan(i_intra/j_intra)
+				direction = 3
+				if geometric - usan_value > 0:
+					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
+					if usan_area > diam and distance_from_cog > 1:
+						if j_cog != j:
+							direction = np.arctan((i_cog - i)/(j_cog - j))
+						else:
+							direction = np.pi
+					if usan_area < diam and distance_from_cog < 1:
+						direction = np.arctan(i_intra/j_intra)
 
 				self.direction[i*self.width+j]	= direction
 				self.response[i*self.width+j] 	= max(0, geometric - usan_value)
@@ -215,6 +214,10 @@ class Susan:
 		A = self.__unflatten(self.response)
 		A = A/max(self.response)*255
 		self.save(A, filename)
+		
+		A = self.__unflatten(self.direction)
+		ax = sns.heatmap(A, linewidth=0)
+		plt.show()
 		"""
 		A = self.__unflatten(self.direction)
 		A = A/max(self.response)*255
