@@ -1,1 +1,0 @@
-* n_max : maximum items in USAN or maximum value acquainted by c function?

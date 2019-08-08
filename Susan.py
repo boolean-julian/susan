@@ -29,8 +29,10 @@ class Susan:
 
 		if mask == "mask37":
 			self._set_mask(mask37)
+			self.mask_rad = 3.4
 		if mask == "mask9":
 			self._set_mask(mask9)
+			self.mask_rad = 1.4
 
 		self._has_lut = True
 		if compare == "naive":
@@ -105,42 +107,12 @@ class Susan:
 
 	def _compare_exp_lut(self, img, a, b, t):
 		return self._exp_lut[img[a]-img[b]]
-	
-	# n from paper
-	def _nbd_compare(self, i, j, t):
-		s = 0
-		for r in np.array(self.mask_nbd):
-			x = i+r[0]
-			y = j+r[1]
-			if x >= 0 and x < self.height and y >= 0 and y < self.width:
-				c = self.compare(self.img, (i,j), (x,y), t)
-				s += c
-		return s
-	
-	def detect_edges(self, t, filename = "out.png", geometric = False):
-		r = self.img.copy()
-		
-		if not self._has_lut:
-			self._init_lut(t)
 
-		if geometric:
-			g = .75*self.nbd_size
-		else:
-			g = self.nbd_size
-
-		directions = np.array([[[0]*2]*self.width]*self.height)
-		max_response = 1
-		for i in range(self.height):
-			for j in range(self.width):
-				r[i,j] = max(0, g - self._nbd_compare(i,j,t))
-				if r[i,j] > max_response:
-					max_response = r[i,j]
-		self.save(r/max_response*255, filename)
-
-	# multiprocessing
+	# make array flat
 	def __flatten(self, A):
 		return A.flatten()
 
+	# turn flat array back into matrix of image size
 	def __unflatten(self, A):
 		uf = np.zeros((self.height, self.width))
 		for i in range(self.height):
@@ -148,19 +120,63 @@ class Susan:
 				uf[i,j] = A[i*self.width + j]
 		return uf
 
-	def _nbd_compare_mp(self, start, end, t, g):
+	# main function for usan
+	# computes usan area, usan value and gradient
+	# for one chunk of height of total size (chunkend - chunkstart) * imagewidth
+	# note that (i,j) = r_0 and (x,y) = r
+	def _nbd_compare_mp(self, start, end, t, geometric):
+		diam = 2*self.mask_rad			# mask diameter
+
 		for i in range(start, end):
 			for j in range(self.width):
-				s = 0
+				usan_area	= 0			# number of pixels elements in usan
+				usan_value 	= 0			# sum over all comparisons in usan
+				
+				i_cog 		= 0			# center of gravity (vertical position)
+				j_cog 		= 0			# center of gravity (horizontal position)
+				
+				i_intra		= 0			# second moment of usan value (vertical position)
+				j_intra		= 0			# second moment of usan value (horizontal position)
+
+				# calculate center of gravity and usan value
 				for r in self.mask_nbd:
 					x = i+r[0]
 					y = j+r[1]
+					
 					if x >= 0 and x < self.height and y >= 0 and y < self.width:
-						s += self.compare(self.img, (i,j), (x,y), t)
-				self.r[i*self.width+j] = max(0, g - s)
+						curr = self.compare(self.img, (i,j), (x,y), t)
+						if curr != 0:
+							usan_value = usan_value + curr
+							
+							i_cog += x * curr
+							j_cog += y * curr
+
+							i_intra += r[0]**2 * curr
+							j_intra += r[1]**2 * curr
+
+						else:
+							usan_area += 1
+
+				i_cog = i_cog / usan_value
+				j_cog = j_cog / usan_value
+
+				# get direction for non max suppression
+				distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
+				direction = 100
+				if usan_area > diam and distance_from_cog > 1:
+					if j_cog != j:
+						direction = np.arctan((i_cog - i)/(j_cog - j))
+					else:
+						direction = np.pi
+				if usan_area < diam and distance_from_cog < 1:
+					direction = np.arctan(i_intra/j_intra)
+
+				self.direction[i*self.width+j]	= direction
+				self.response[i*self.width+j] 	= max(0, geometric - usan_value)
 
 	def detect_edges_mp(self, t, filename = "out.png", geometric = False):
-		self.r = mp.Array('d',self.width*self.height) # shared array for final image (flat)
+		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
+		self.direction 	= mp.Array('d', self.width*self.height)
 
 		if not self._has_lut:
 			self._init_lut(t)
@@ -195,10 +211,16 @@ class Susan:
 			job.start()
 		for job in jobs:
 			job.join()
-		
-		A = self.__unflatten(self.r)
-		A = A/max(self.r)*255
+
+		A = self.__unflatten(self.response)
+		A = A/max(self.response)*255
 		self.save(A, filename)
+		"""
+		A = self.__unflatten(self.direction)
+		A = A/max(self.response)*255
+		self.save(A, "directions_" + filename)
+		"""
+
 		
 
 
@@ -222,3 +244,40 @@ class Susan:
 		except:
 			print("Error: Couldn't save", filename)
 			return
+
+
+
+
+	""" deprecated
+	# n from paper
+	def _nbd_compare(self, i, j, t):
+		s = 0
+		for r in np.array(self.mask_nbd):
+			x = i+r[0]
+			y = j+r[1]
+			if x >= 0 and x < self.height and y >= 0 and y < self.width:
+				c = self.compare(self.img, (i,j), (x,y), t)
+				s += c
+		return s
+	
+
+	def detect_edges(self, t, filename = "out.png", geometric = False):
+		r = self.img.copy()
+		
+		if not self._has_lut:
+			self._init_lut(t)
+
+		if geometric:
+			g = .75*self.nbd_size
+		else:
+			g = self.nbd_size
+
+		directions = np.array([[0]*self.width]*self.height)
+		max_response = 1
+		for i in range(self.height):
+			for j in range(self.width):
+				r[i,j] = max(0, g - self._nbd_compare(i,j,t))
+				if r[i,j] > max_response:
+					max_response = r[i,j]
+		self.save(r/max_response*255, filename)
+	"""
