@@ -2,6 +2,8 @@ import numpy as np
 import sys
 import multiprocessing as mp
 from PIL import Image
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 n_proc = mp.cpu_count()
 
@@ -159,7 +161,7 @@ class Susan:
 				j_cog = j_cog / usan_value
 
 				# get direction for non max suppression
-				direction = 2
+				direction = 2	# 'no edge' marker
 				if geometric - usan_value > 0:
 					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
 					if usan_area > diam and distance_from_cog > 1:
@@ -174,38 +176,38 @@ class Susan:
 				self.direction[i*self.width+j]	= direction
 				self.response[i*self.width+j] 	= max(0, geometric - usan_value)
 
-	_orientations = [-0.375*np.pi, -0.125*np.pi, 0.125*np.pi, 0.375*np.pi]
+	_orientations = np.pi*np.array([-0.375, -0.125, 0.125, 0.375])
 	def _suppress_nonmax_mp(self, start, end):
 		for i in range(start, end):
 			if i >= 1 and i < self.height-1:
 				for j in range(1,self.width-1):
-					#if self.direction != 2: 
-						maxhere = True
+					if self.direction[i*self.width+j] != 2:
+						max_here = True
 						index = i*self.width+j
 						r_curr = self.response[index]
 						
 						# negative diagonal
 						if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
 							if self.response[index+1-self.width] > r_curr or self.response[index-1+self.width] > r_curr:
-								maxhere = False
-						
+								max_here = False
+
 						# vertical
 						elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
 							if self.response[index+1] > r_curr or self.response[index-1] > r_curr:
-								maxhere = False
+								max_here = False
 						
 						# positive diagonal
 						elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
 							if self.response[index+self.width+1] > r_curr or self.response[index-self.width-1] > r_curr:
-								maxhere = False
+								max_here = False
 
 						# horizontal
 						else:
 							if self.response[index+self.width] > r_curr or self.response[index-self.width] > r_curr:
-								maxhere = False
-								
+								max_here = False
+									
 						# apply nonmax suppression
-						if not maxhere:
+						if not max_here:
 							self.response[index] = 0
 
 	def __execute_and_wait(self, jobs):
@@ -214,7 +216,7 @@ class Susan:
 		for job in jobs:
 			job.join()
 
-	def detect_edges_mp(self, t, filename = "out.png", geometric = False, nms = True):
+	def detect_edges_mp(self, t, filename = "out.png", geometric = False, nms = True, thin = True, heatmap = False):
 		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
 		self.direction 	= mp.Array('d', self.width*self.height)
 
@@ -248,9 +250,14 @@ class Susan:
 				for i in range(len(chunks)-1)
 		]
 		self.__execute_and_wait(cjobs)
-
 		self.save(self.__unflatten(self.response)/max(self.response)*255, "no_nms_"+filename)
 
+		# Directional heatmap, basically gradient at the edges
+		if heatmap:
+			sns.heatmap(self.__unflatten(self.direction)/max(self.direction)*255, cmap="YlGnBu")
+			plt.savefig("heatmap_"+filename)
+
+		# Non-max suppression
 		if nms:
 			njobs = [mp.Process(
 					target = self._suppress_nonmax_mp,
@@ -259,18 +266,10 @@ class Susan:
 			]
 			self.__execute_and_wait(njobs)
 			self.save(self.__unflatten(self.response)/max(self.response)*255, filename)
-		
-		"""
-		A = self.__unflatten(self.direction)
-		ax = sns.heatmap(A, linewidth=0)
-		plt.savefig("directions_"+filename)
-		"""
-		"""
-		A = self.__unflatten(self.direction)
-		A = A/max(self.response)*255
-		self.save(A, "directions_" + filename)
-		"""
 
+		# Thinning to be added
+		if thin:
+			pass
 		
 
 
