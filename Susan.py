@@ -179,7 +179,7 @@ class Susan:
 		for i in range(start, end):
 			if i >= 1 and i < self.height-1:
 				for j in range(1,self.width-1):
-					if self.direction != 2: 
+					#if self.direction != 2: 
 						maxhere = True
 						index = i*self.width+j
 						r_curr = self.response[index]
@@ -249,6 +249,8 @@ class Susan:
 		]
 		self.__execute_and_wait(cjobs)
 
+		self.save(self.__unflatten(self.response)/max(self.response)*255, "no_nms_"+filename)
+
 		if nms:
 			njobs = [mp.Process(
 					target = self._suppress_nonmax_mp,
@@ -256,9 +258,7 @@ class Susan:
 					for i in range(len(chunks)-1)
 			]
 			self.__execute_and_wait(njobs)
-		
-
-		self.save(self.__unflatten(self.response)/max(self.response)*255, filename)
+			self.save(self.__unflatten(self.response)/max(self.response)*255, filename)
 		
 		"""
 		A = self.__unflatten(self.direction)
