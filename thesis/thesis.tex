@@ -14,10 +14,15 @@
 \usepackage{svg}
 \usepackage{nameref}
 \usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{colortbl}
 \usepackage{subcaption}
 \usepackage{cleveref}
+\usepackage{tikz}
 \usepackage[main=ngerman]{babel}
 \hypersetup{hypertexnames=false}
+
+\usetikzlibrary{matrix}
 
 \DeclareMathOperator{\rel}{\sim_R}
 \renewcommand{\emph}[1]{\textit{#1}}
@@ -82,7 +87,59 @@
 \chapter{Einführung}
 
 \chapter{Mathematische Grundlagen}
+
 \chapter{Der SUSAN Kantendetektor}
+	Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild wird eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken	
+	\begin{center}
+		$M_{37} =$
+		\begin{tikzpicture}[fill=orange]
+			\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						&			&			&			&			&			&			\\
+						&			&			&			&			&			&			\\
+						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+						&			&|[fill]|	&|[fill=yellow]|	&|[fill]|	&			&			\\
+						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+						&			&			&			&			&			&			\\
+						&			&			&			&			&			&			\\
+			};
+		\end{tikzpicture}\qquad $M_{9} =$
+		\begin{tikzpicture}[fill=orange]
+			\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+						&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+			|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+			|[fill]|	&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+			|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+						&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+			};
+		\end{tikzpicture}
+	\end{center}
+	wobei das gelbe Pixel der Mittelpunkt der Maske ist, die orangenen Pixel in der Maske und die weißen Pixel außerhalb der Maske liegen. 
+	Das SUSAN-Prinzip funktioniert wie folgt:
+	Für jedes Pixel in $I$, berechne die Antwort $$A(r_0) = \text{max}\{0, g - n(r_0)\}$$, wobei
+
+	$$ n(r_0) = \sum_r c(r, r_0) $$
+
+
+	$$
+		c_t(r, r_0) =
+			\begin{cases}
+				1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
+				0 	& \text{sonst}
+			\end{cases}
+	$$
+
+	$$
+		c_t(r, r_0) =
+			\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg)
+	$$
+
+
+	$$ A(r_0) = \text{max}\{0, g - n(r_0)\} $$
+
+	$$ r_{\text{COG}} = \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)} $$
+
 
 
 \end{document}
