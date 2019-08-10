@@ -135,8 +135,9 @@ class Susan:
 				i_cog 		= 0			# center of gravity (vertical position)
 				j_cog 		= 0			# center of gravity (horizontal position)
 				
-				i_intra		= 0			# second moment of usan value (vertical position)
-				j_intra		= 0			# second moment of usan value (horizontal position)
+				i2_intra		= 0			# second moment of usan value (vertical position)
+				j2_intra		= 0			# second moment of usan value (horizontal position)
+				ij_intra		= 0			# second moment of usan value (sign)
 
 				# calculate center of gravity and usan value
 				for r in self.mask_nbd:
@@ -151,8 +152,9 @@ class Susan:
 							i_cog += x * curr
 							j_cog += y * curr
 
-							i_intra += r[0]**2 * curr
-							j_intra += r[1]**2 * curr
+							i2_intra += r[0]**2 * curr
+							j2_intra += r[1]**2 * curr
+							ij_intra += r[0] * r[1] * curr
 
 						else:
 							usan_area += 1
@@ -164,17 +166,25 @@ class Susan:
 				direction = 2	# 'no edge' marker
 				if geometric - usan_value > 0:
 					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
-					if usan_area > diam and distance_from_cog > 1:
+					
+					# inter pixel case
+					if usan_area >= diam and distance_from_cog >= 1:
 						if j_cog != j:
 							direction = np.arctan((i_cog - i)/(j_cog - j))
 						else:
 							direction = np.pi/2
-					if usan_area < diam and distance_from_cog < 1:
-						direction = np.arctan(i_intra/j_intra)
 
-				
-				self.direction[i*self.width+j]	= direction
-				self.response[i*self.width+j] 	= max(0, geometric - usan_value)
+					# intra pixel case
+					elif i2_intra != 0:
+						direction = np.sign(ij_intra) * np.arctan(j2_intra/i2_intra)
+
+					else:
+						direction = np.pi/2
+
+
+				index = i*self.width+j
+				self.direction[index]	= direction
+				self.response[index] 	= max(0, geometric - usan_value)
 
 	_orientations = np.pi*np.array([-0.375, -0.125, 0.125, 0.375])
 	def _suppress_nonmax_mp(self, start, end):
