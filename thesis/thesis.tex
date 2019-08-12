@@ -87,58 +87,113 @@
 \chapter{Einführung}
 
 \chapter{Mathematische Grundlagen}
+	\section{Analytische Grundlagen}
+	\section{Varianzanalyse}
+	\section{Bildverarbeitung}
 
 \chapter{Der SUSAN Kantendetektor}
-	Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild wird eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken	
-	\begin{center}
-		$M_{37} =$
-		\begin{tikzpicture}[fill=orange]
-			\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-						&			&			&			&			&			&			\\
-						&			&			&			&			&			&			\\
-						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-						&			&|[fill]|	&|[fill=yellow]|	&|[fill]|	&			&			\\
-						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-						&			&			&			&			&			&			\\
-						&			&			&			&			&			&			\\
-			};
-		\end{tikzpicture}\qquad $M_{9} =$
-		\begin{tikzpicture}[fill=orange]
-			\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-						&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
-			|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-			|[fill]|	&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-			|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-						&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
-						&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-			};
-		\end{tikzpicture}
-	\end{center}
-	wobei das gelbe Pixel der Mittelpunkt der Maske ist, die orangenen Pixel in der Maske und die weißen Pixel außerhalb der Maske liegen. 
-	Das SUSAN-Prinzip funktioniert wie folgt:
-	Für jedes Pixel in $I$, berechne die Antwort $$A(r_0) = \text{max}\{0, g - n(r_0)\}$$, wobei
+	\section{Der Algorithmus}
+		Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild wird eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken	
+		\begin{center}
+			\begin{tikzpicture}[fill=orange]
+				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+							&			&			&			&			&			&			\\
+							&			&			&			&			&			&			\\
+							&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+							&			&|[fill]|	&|[fill=yellow]|	&|[fill]|	&			&			\\
+							&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+							&			&			&			&			&			&			\\
+							&			&			&			&			&			&			\\
+				};
+			\end{tikzpicture}\qquad
+			\begin{tikzpicture}[fill=orange]
+				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+							&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+							&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+				|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+				|[fill]|	&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+				|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+							&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+							&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+				};
+			\end{tikzpicture}
+		\end{center}
+		wobei das gelbe Pixel der Mittelpunkt der Maske ist, die orangenen Pixel in der Maske und die weißen Pixel außerhalb der Maske liegen. 
+		
+		Das SUSAN-Prinzip funktioniert wie folgt:
+		Für jedes Pixel $r_0$ in $I$ (wobei $I(r_0)$ der Grauwert am Pixel $r_0$ ist), berechne die Antwort
+			$$A(r_0) = \text{max}\{0, g - n(r_0)\}.$$
+		Dabei ist $n$ definiert als
+			$$n(r_0) = \sum_r c_t(r, r_0),$$
+		wobei $r$ die Pixel in der respektiven Maske sind und	
+			$$
+				c_t(r, r_0) =
+					\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg)
+			$$
+		eine Vergleichsfunktion für zwei Pixel ist. Statt der obigen Vergleichsfunktion kann auch die Definition
+			$$
+				c_t(r, r_0) =
+					\begin{cases}
+						1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
+						0 	& \text{sonst}
+					\end{cases}
+			$$
+		verwendet werden.
+		Ein Ausschnitt der Antwort könnte etwa so aussehen:
+		\begin{center}
+			\begin{tikzpicture}[fill=gray]
+				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
+				};
+			\end{tikzpicture}
+		\end{center}
+		Die Kante ist in diesem Beispiel noch nicht genau lokalisiert. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt. Das Ziel ist es also, folgende Antwort aus der oberen zu isolieren.
+		\begin{center}
+			\begin{tikzpicture}[fill=gray]
+				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
+								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
+				};
+			\end{tikzpicture}
+		\end{center}
+		Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$ durch folgende Fallunterscheidung geprüft:
+		\begin{enumerate}
+			\item \textbf{Inter-Pixel:}
 
-	$$ n(r_0) = \sum_r c(r, r_0) $$
+			\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als 1 Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
+			$$ D(r_0) = \begin{cases}
+				\text{arctan}\bigg(
+					\frac{x_0 - \text{COG}(x_0)}
+					{y_0 - \text{COG}(y_0)}
+				\bigg) & \text{falls } \text{COG}(y_0) \neq y_0 \\
+				
+				\frac{\pi}{2} & \text{sonst}
 
-
-	$$
-		c_t(r, r_0) =
-			\begin{cases}
-				1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
-				0 	& \text{sonst}
-			\end{cases}
-	$$
-
-	$$
-		c_t(r, r_0) =
-			\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg)
-	$$
-
-
-	$$ A(r_0) = \text{max}\{0, g - n(r_0)\} $$
-
-	$$ r_{\text{COG}} = \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)} $$
+			\end{cases}, $$
+			wobei
+			$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)}. $$
+			\item \textbf{Intra-Pixel:}
+			
+			\noindent Andernfalls müssen wir die zweiten Momente der USAN folgendermaßen berechnen:
+			\begin{eqnarray*}
+				d_{x_0} &:=& \sum_r (x-x_0)^2 \, c_t(r,r_0) \\
+				d_{y_0} &:=& \sum_r (y-y_0)^2 \, c_t(r,r_0) \\
+				\sigma 	&:=& \text{sgn}\bigg(\sum_r (x-x_0) \, (y-y_0) \, c_t(r,r_0)\bigg)
+			\end{eqnarray*}
+			Dabei ergibt sich die Richtung als
+			$$ D(r_0) = \begin{cases}
+					\sigma \, \text{arctan} \, \frac{d_{y_0}}{d_{x_0}} 	&	\text{falls } d_{x_0} \neq 0 \\ 
+					\frac{\pi}{2}										&	\text{sonst}
+				\end{cases}$$
+			Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
+		\end{enumerate}
 
 
 
