@@ -1,0 +1,8 @@
+\babel@toc {ngerman}{}
+\contentsline {chapter}{\numberline {1}Einf\IeC {\"u}hrung}{2}{chapter.2}
+\contentsline {chapter}{\numberline {2}Mathematische Grundlagen}{3}{chapter.3}
+\contentsline {section}{\numberline {2.1}Analytische Grundlagen}{3}{section.4}
+\contentsline {section}{\numberline {2.2}Varianzanalyse}{3}{section.5}
+\contentsline {section}{\numberline {2.3}Bildverarbeitung}{3}{section.6}
+\contentsline {chapter}{\numberline {3}Der SUSAN Kantendetektor}{4}{chapter.7}
+\contentsline {section}{\numberline {3.1}Der Algorithmus}{4}{section.8}
