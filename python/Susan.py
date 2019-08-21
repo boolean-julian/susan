@@ -28,7 +28,7 @@ _mask9 = np.matrix([
 class Susan:
 	# default mask with 37 neighbors per pixel
 	# sets initial mask, file path and comparison function
-	def __init__(self, path, mask = "mask37", compare = "exp_lut"):	
+	def __init__(self, path, mask = "mask37", compare = "exp_lut"):
 		self.load(path)
 
 		if mask == "mask37":
@@ -62,16 +62,16 @@ class Susan:
 		if self.nbd_size <= 1:
 			print("Error: Mask should have more than one item (has %d)" % self.nbd_size)
 			sys.exit(0)
-		
+
 		self._init_nbd()
 
 	# loads image into susan module
-	def load(self, path):
+	def load(self, path, space = "L"):
 		self._set_path(path)
-		
+
 		try:
 			#self.img = cv2.imread(path, 0)
-			self.img = np.array(Image.open(self.path).convert("L"), dtype="i")	
+			self.img = np.array(Image.open(self.path).convert(space), dtype="i")
 
 		except:
 			print("Error: Cannot open", self.path)
@@ -131,10 +131,10 @@ class Susan:
 			for j in range(self.width):
 				usan_area	= 0			# number of pixels elements in usan
 				usan_value 	= 0			# sum over all comparisons in usan
-				
+
 				i_cog 		= 0			# center of gravity (vertical position)
 				j_cog 		= 0			# center of gravity (horizontal position)
-				
+
 				i2_intra		= 0			# second moment of usan value (vertical position)
 				j2_intra		= 0			# second moment of usan value (horizontal position)
 				ij_intra		= 0			# second moment of usan value (sign)
@@ -143,12 +143,12 @@ class Susan:
 				for r in self.mask_nbd:
 					x = i+r[0]
 					y = j+r[1]
-					
+
 					if x >= 0 and x < self.height and y >= 0 and y < self.width:
 						curr = self.compare(self.img, (i,j), (x,y), t)
 						if curr != 0:
 							usan_value = usan_value + curr
-							
+
 							i_cog += x * curr
 							j_cog += y * curr
 
@@ -166,7 +166,7 @@ class Susan:
 				direction = 2	# 'no edge' marker
 				if geometric - usan_value > 0:
 					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
-					
+
 					# inter pixel case
 					if usan_area >= diam and distance_from_cog >= 1:
 						if j_cog != j:
@@ -176,7 +176,7 @@ class Susan:
 
 					# intra pixel case
 					elif i2_intra != 0:
-						direction = np.sign(ij_intra) * np.arctan(j2_intra/i2_intra)
+						direction = -1 * np.sign(ij_intra) * np.arctan(j2_intra/i2_intra)
 
 					else:
 						direction = np.pi/2
@@ -195,7 +195,7 @@ class Susan:
 						max_here = True
 						index = i*self.width+j
 						r_curr = self.response[index]
-						
+
 						# negative diagonal
 						if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
 							if self.response[index+1-self.width] > r_curr or self.response[index-1+self.width] > r_curr:
@@ -205,7 +205,7 @@ class Susan:
 						elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
 							if self.response[index+1] > r_curr or self.response[index-1] > r_curr:
 								max_here = False
-						
+
 						# positive diagonal
 						elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
 							if self.response[index+self.width+1] > r_curr or self.response[index-self.width-1] > r_curr:
@@ -215,7 +215,7 @@ class Susan:
 						else:
 							if self.response[index+self.width] > r_curr or self.response[index-self.width] > r_curr:
 								max_here = False
-									
+
 						# apply nonmax suppression
 						if not max_here:
 							self.response[index] = 0
@@ -226,7 +226,7 @@ class Susan:
 		for job in jobs:
 			job.join()
 
-	def detect_edges_mp(self, t, filename = "out.png", geometric = False, nms = True, thin = True, heatmap = False):
+	def detect_edges_mp(self, t, filename = "out.png", geometric = True, nms = True, thin = True, heatmap = False, overlay = True):
 		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
 		self.direction 	= mp.Array('d', self.width*self.height)
 
@@ -254,13 +254,14 @@ class Susan:
 				pivot += chunk_size
 			chunks[i+1] = pivot
 
-		cjobs = [mp.Process(
+		jobs = [mp.Process(
 				target = self._nbd_compare_mp,
 				args = (chunks[i], chunks[i+1], t, g))
 				for i in range(len(chunks)-1)
 		]
-		self.__execute_and_wait(cjobs)
-		self.save(self.__unflatten(self.response)/max(self.response)*255, "no_nms_"+filename)
+		self.__execute_and_wait(jobs)
+		R = self.__unflatten(self.response)/max(self.response)*255
+		self.save(R, "no_nms_"+filename)
 
 		# Directional heatmap, basically gradient at the edges
 		if heatmap:
@@ -269,24 +270,70 @@ class Susan:
 
 		# Non-max suppression
 		if nms:
-			njobs = [mp.Process(
+			jobs = [mp.Process(
 					target = self._suppress_nonmax_mp,
 					args = (chunks[i], chunks[i+1]))
 					for i in range(len(chunks)-1)
 			]
-			self.__execute_and_wait(njobs)
-			self.save(self.__unflatten(self.response)/max(self.response)*255, filename)
+			self.__execute_and_wait(jobs)
+			R = self.__unflatten(self.response)/max(self.response)*255
+			self.save(R, filename)
 
 		# Thinning to be added
 		if thin:
 			pass
-		
+
+		# Overlay for edge detection
+		if overlay:
+			O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
+			for i in range(self.height):
+				for j in range(self.width):
+					if R[i,j] == 0:
+						O[i,j,0] = self.img[i,j]
+						O[i,j,1] = self.img[i,j]
+						O[i,j,2] = self.img[i,j]
+
+					elif R[i,j] <= 127:
+						O[i,j,0] = 255
+
+					elif i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
+						c = 1
+						O[i-2,	j-2,c] 	= 255
+						O[i-1,	j-2,c] 	= 255
+						O[i, 	j-2,c] 	= 255
+						O[i+1,	j-2,c]	= 255
+						O[i+2,	j-2,c]	= 255
+
+						O[i-2,	j-1,c]	= 255
+						O[i+2,	j-1,c]	= 255
+
+						O[i-2,	j,c]	= 255
+						O[i+2,	j,c]	= 255
+
+						O[i-2,	j+1, c]	= 255
+						O[i+2,	j+1, c] = 255
+
+						O[i-2,	j+2, c] = 255
+						O[i+2,	j+2, c] = 255
+
+						O[i-2,	j+2,c] 	= 255
+						O[i-1,	j+2,c] 	= 255
+						O[i, 	j+2,c] 	= 255
+						O[i+1,	j+2,c]	= 255
+						O[i+2,	j+2,c]	= 255
+
+			self.save(O, "overlay_"+filename)
+
+
+
+
+
 
 
 	def save(self, r, filename = "a.png"):
 		"""
 		Saves image referenced in the ConstantDenoiser object.
-		
+
 		Parameters
 		----------
 		filename: String, optional
@@ -298,7 +345,7 @@ class Susan:
 			#cv2.imwrite(filename, np.uint8(r))
 			a = Image.fromarray(np.uint8(r))
 			a.save(filename)
-			
+
 			print("Saved file to", filename)
 		except:
 			print("Error: Couldn't save", filename)
@@ -318,11 +365,11 @@ class Susan:
 				c = self.compare(self.img, (i,j), (x,y), t)
 				s += c
 		return s
-	
+
 
 	def detect_edges(self, t, filename = "out.png", geometric = False):
 		r = self.img.copy()
-		
+
 		if not self._has_lut:
 			self._init_lut(t)
 
