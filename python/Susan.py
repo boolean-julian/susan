@@ -265,7 +265,7 @@ class Susan:
 
 		# Directional heatmap, basically gradient at the edges
 		if heatmap:
-			sns.heatmap(self.__unflatten(self.direction)/max(self.direction)*255, cmap="YlGnBu")
+			sns.heatmap(self.__unflatten(self.direction), cmap="YlGnBu")
 			plt.savefig("heatmap_"+filename)
 
 		# Non-max suppression
@@ -288,39 +288,43 @@ class Susan:
 			O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
 			for i in range(self.height):
 				for j in range(self.width):
-					if R[i,j] == 0:
-						O[i,j,0] = self.img[i,j]
-						O[i,j,1] = self.img[i,j]
-						O[i,j,2] = self.img[i,j]
+					O[i,j,0] = self.img[i,j]
+					O[i,j,1] = self.img[i,j]
+					O[i,j,2] = self.img[i,j]
 
-					elif R[i,j] <= 127:
-						O[i,j,0] = 255
+			for i in range(self.height):
+				for j in range(self.width):
+					if R[i,j] != 0:
+						O[i,j] = [255,0,0]
 
-					elif i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
+			for i in range(self.height):
+				for j in range(self.width):
+					if R[i,j] > 110 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
 						c = 1
-						O[i-2,	j-2,c] 	= 255
-						O[i-1,	j-2,c] 	= 255
-						O[i, 	j-2,c] 	= 255
-						O[i+1,	j-2,c]	= 255
-						O[i+2,	j-2,c]	= 255
+						O[i-2,	j-2] 	= [0,255,0]
+						O[i-1,	j-2] 	= [0,255,0]
+						O[i, 	j-2] 	= [0,255,0]
+						O[i+1,	j-2]	= [0,255,0]
+						O[i+2,	j-2]	= [0,255,0]
 
-						O[i-2,	j-1,c]	= 255
-						O[i+2,	j-1,c]	= 255
+						O[i-2,	j-1]	= [0,255,0]
+						O[i+2,	j-1]	= [0,255,0]
 
-						O[i-2,	j,c]	= 255
-						O[i+2,	j,c]	= 255
+						O[i-2,	j]	= [0,255,0]
+						O[i+2,	j]	= [0,255,0]
 
-						O[i-2,	j+1, c]	= 255
-						O[i+2,	j+1, c] = 255
+						O[i-2,	j+1]	= [0,255,0]
+						O[i+2,	j+1] = [0,255,0]
 
-						O[i-2,	j+2, c] = 255
-						O[i+2,	j+2, c] = 255
+						O[i-2,	j+2] = [0,255,0]
+						O[i+2,	j+2] = [0,255,0]
 
-						O[i-2,	j+2,c] 	= 255
-						O[i-1,	j+2,c] 	= 255
-						O[i, 	j+2,c] 	= 255
-						O[i+1,	j+2,c]	= 255
-						O[i+2,	j+2,c]	= 255
+						O[i-2,	j+2] 	= [0,255,0]
+						O[i-1,	j+2] 	= [0,255,0]
+						O[i, 	j+2] 	= [0,255,0]
+						O[i+1,	j+2]	= [0,255,0]
+						O[i+2,	j+2]	= [0,255,0]
+
 
 			self.save(O, "overlay_"+filename)
 
