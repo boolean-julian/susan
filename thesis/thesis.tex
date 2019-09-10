@@ -92,6 +92,10 @@
 
 \chapter{Der SUSAN Kantendetektor}
 	\section{Der Algorithmus}
+		Der SUSAN Kantendetektor ...
+
+
+	\subsection{Das SUSAN-Prinzip}\label{ssec:susan_principle}
 		Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild wird eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken	
 		\begin{center}
 			\begin{tikzpicture}[fill=orange]
@@ -129,44 +133,24 @@
 				c_t(r, r_0) =
 					\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg)
 			$$
-		eine Vergleichsfunktion für zwei Pixel ist. Statt der obigen Vergleichsfunktion kann auch die Definition
+		eine Vergleichsfunktion für zwei Pixel ist. Statt der obigen Vergleichsfunktion kann auch die Näherung
 			$$
-				c_t(r, r_0) =
+				c_t(r, r_0) \approx
 					\begin{cases}
 						1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
 						0 	& \text{sonst}
 					\end{cases}
 			$$
-		verwendet werden.
-		Ein Ausschnitt der Antwort könnte etwa so aussehen:
-		\begin{center}
-			\begin{tikzpicture}[fill=gray]
-				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill]|	&			&|[fill]|	&|[fill=black]|			\\
-				};
-			\end{tikzpicture}
-		\end{center}
-		Die Kante ist in diesem Beispiel noch nicht genau lokalisiert. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt. Das Ziel ist es also, folgende Antwort aus der oberen zu isolieren.
-		\begin{center}
-			\begin{tikzpicture}[fill=gray]
-				\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
-								|[fill=black]|			&|[fill=black]|	&			&|[fill=black]|	&|[fill=black]|			\\
-				};
-			\end{tikzpicture}
-		\end{center}
-		Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$ durch folgende Fallunterscheidung geprüft:
+		verwendet werden. Als USAN bezeichnen wir genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$, jedes Pixel hat also seine eigene USAN.
+
+		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
+		Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellt man fest, dass die Antwort $A$ ungleich $0$ ist.
+		Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
+		Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch folgende Fallunterscheidung berechnet:
 		\begin{enumerate}
 			\item \textbf{Inter-Pixel:}
 
-			\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als 1 Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
+			\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
 			$$ D(r_0) = \begin{cases}
 				\text{arctan}\bigg(
 					\frac{x_0 - \text{COG}(x_0)}
@@ -193,6 +177,54 @@
 				\end{cases}$$
 			Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
 		\end{enumerate}
+
+		Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess funktioniert.
+
+		\section{Implementation}\label{sec:implementation}
+		Für meine persönliche Implementation des SUSAN-Kantendetektors in Python 3 habe ich eine Reihe von ausgewählten Gütekriterien aus der Softwaretechnik herangezogen:
+			\begin{enumerate}
+				\item Funktionalität
+				\item Effizienz
+				\item Benutzbarkeit
+				\item Änderbarkeit
+			\end{enumerate}
+		%hier Quelle einfügen
+		In diesem Kapitel werde ich vor allen Dingen auf die Punkte 2 - 4 eingehen.
+		Grundsätzlich lässt sich die Struktur der Software folgendermaßen darstellen: ..............
+		Es sei zu jedem Unterpunkt dieses Kapitels gesagt, dass sich die Implementation im Anhang [ref] befindet.
+		
+		\subsection{Masken}
+
+		\subsection{Vergleichsfunktion}
+			Zu Gunsten der Effizienz habe ich für die Vergleichsfunktion eine Lookup-Tabelle implementiert, wie es auch in [quelle] nahgelegt wurde. Beim Initialisieren des \texttt{Susan}-Objekts wird ein Feld erzeugt. Das Ziel ist es, alle möglichen Werte, die $c_t$ (siehe \ref{ssec:susan_principle}) annehmen kann, zu speichern.
+			In unserem Fall ist $c_t$ folgendermaßen definiert:
+			$$ 
+				c_t(a,b) :=  
+					\text{exp}\bigg(-\Big(\frac{I(a) - I(b)}{t}\Big)^6\bigg)
+			$$
+			Ein Pixel in einem 8-bit Graustufenbild kann $2^8 = 256$ mögliche Intensitäten annehmen, demnach braucht das Feld für die Differenz zweier solcher Graustufenintensitäten $512$ Plätze.
+			Regulär werden Felder entweder ab $0$ oder $1$ indiziert. In Python werden Felder ab $0$ indiziert, allerdings bietet Python den Vorteil, dass man mit Index $-i$ das $i$-te Element von hinten abrufen kann. In der Implementation ist diese Lookup-Tabelle dank dieser speziellen Art der Indizierung einfach und elegant: Der Index $a-b$ des Feldes steht für $c_t(a,b)$.
+
+		\subsection{Non-Maximum-Suppression}
+			Um die Non-Maximum-Suppression durchzuführen, wird zunächst für jedes Pixel $(i,j)$ mit $A(i,j) > 0$ die Kantenrichtung $D(i,j)$ bestimmt. Die möglichen Kantenrichtungen werden dann für einen Zwischenschritt kategorisiert. Die Kategorien sind "negativ diagonal", "vertikal", "positiv diagonal" und "horizontal". Die Kategorie bestimmt, welche zwei adjazenten Pixel für die Non-Maximum-Suppression interessant sind.
+			\begin{center}
+				\begin{tabular}{|ll|l|ll|}
+				\hline
+				\textbf{Bedingung}					&								& \textbf{Kategorie}			& \textbf{Adjazente $C$} 	&	\\
+				\hline
+													&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$(i+1, j-1)$, 			&$(i-1, j+1)$\\
+				\hline
+				$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& vertikal 						&$(i-1, j)$, 			&$(i+1, j)$\\
+				\hline
+				$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$(i, j-1)$, 			&$(i, j+1)$\\
+				\hline
+				$D(i,j) > -\frac{3}{8}\pi$			&								& horizontal					&$(i+1, j-1)$, 			&$(i-1, j+1)$\\
+				\hline
+				\end{tabular}
+			\end{center}
+			Für jedes Pixel $(i,j)$ wird nun überprüft, ob $(i,j) = \text{max}(C \cap \{(i,j)\})$ gilt. Gilt es nicht, so wird $A(i,j)$ unterdrückt.
+			
+		\subsection{Lokale Unabhängigkeit und Parallelisierung}
 
 
 
