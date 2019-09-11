@@ -144,41 +144,43 @@
 		verwendet werden. Als USAN bezeichnen wir genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$, jedes Pixel hat also seine eigene USAN.
 
 		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
-		Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellt man fest, dass die Antwort $A$ ungleich $0$ ist.
-		Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
-		Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch folgende Fallunterscheidung berechnet:
-		\begin{enumerate}
-			\item \textbf{Inter-Pixel:}
+			Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellt man fest, dass die Antwort $A$ ungleich $0$ ist.
+			Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
+			Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch folgende Fallunterscheidung berechnet:
+			\begin{enumerate}
+				\item \textbf{Inter-Pixel:}
 
-			\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
-			$$ D(r_0) = \begin{cases}
-				\text{arctan}\bigg(
-					\frac{x_0 - \text{COG}(x_0)}
-					{y_0 - \text{COG}(y_0)}
-				\bigg) & \text{falls } \text{COG}(y_0) \neq y_0 \\
+				\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
+				$$ D(r_0) = \begin{cases}
+					\text{arctan}\bigg(
+						\frac{x_0 - \text{COG}(x_0)}
+						{y_0 - \text{COG}(y_0)}
+					\bigg) & \text{falls } \text{COG}(y_0) \neq y_0 \\
+					
+					\frac{\pi}{2} & \text{sonst}
+
+				\end{cases}, $$
+				wobei
+				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)}. $$
+				\item \textbf{Intra-Pixel:}
 				
-				\frac{\pi}{2} & \text{sonst}
+				\noindent Andernfalls müssen wir die zweiten Momente der USAN folgendermaßen berechnen:
+				\begin{eqnarray*}
+					d_{x_0} &:=& \sum_r (x-x_0)^2 \, c_t(r,r_0) \\
+					d_{y_0} &:=& \sum_r (y-y_0)^2 \, c_t(r,r_0) \\
+					\sigma 	&:=& \text{sgn}\bigg(\sum_r (x-x_0) \, (y-y_0) \, c_t(r,r_0)\bigg)
+				\end{eqnarray*}
+				Dabei ergibt sich die Richtung als
+				$$ D(r_0) = \begin{cases}
+						\sigma \, \text{arctan} \, \frac{d_{y_0}}{d_{x_0}} 	&	\text{falls } d_{x_0} \neq 0 \\ 
+						\frac{\pi}{2}										&	\text{sonst}
+					\end{cases}$$
+				Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
+			\end{enumerate}
 
-			\end{cases}, $$
-			wobei
-			$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)}. $$
-			\item \textbf{Intra-Pixel:}
-			
-			\noindent Andernfalls müssen wir die zweiten Momente der USAN folgendermaßen berechnen:
-			\begin{eqnarray*}
-				d_{x_0} &:=& \sum_r (x-x_0)^2 \, c_t(r,r_0) \\
-				d_{y_0} &:=& \sum_r (y-y_0)^2 \, c_t(r,r_0) \\
-				\sigma 	&:=& \text{sgn}\bigg(\sum_r (x-x_0) \, (y-y_0) \, c_t(r,r_0)\bigg)
-			\end{eqnarray*}
-			Dabei ergibt sich die Richtung als
-			$$ D(r_0) = \begin{cases}
-					\sigma \, \text{arctan} \, \frac{d_{y_0}}{d_{x_0}} 	&	\text{falls } d_{x_0} \neq 0 \\ 
-					\frac{\pi}{2}										&	\text{sonst}
-				\end{cases}$$
-			Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
-		\end{enumerate}
+			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess funktioniert.
 
-		Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess funktioniert.
+		\subsection{Ausdünnen}
 
 		\section{Implementation}\label{sec:implementation}
 		Für meine persönliche Implementation des SUSAN-Kantendetektors in Python 3 habe ich eine Reihe von ausgewählten Gütekriterien aus der Softwaretechnik herangezogen:
@@ -189,11 +191,11 @@
 				\item Änderbarkeit
 			\end{enumerate}
 		%hier Quelle einfügen
-		In diesem Kapitel werde ich vor allen Dingen auf die Punkte 2 - 4 eingehen.
 		Grundsätzlich lässt sich die Struktur der Software folgendermaßen darstellen: ..............
 		Es sei zu jedem Unterpunkt dieses Kapitels gesagt, dass sich die Implementation im Anhang [ref] befindet.
 		
 		\subsection{Masken}
+
 
 		\subsection{Vergleichsfunktion}
 			Zu Gunsten der Effizienz habe ich für die Vergleichsfunktion eine Lookup-Tabelle implementiert, wie es auch in [quelle] nahgelegt wurde. Beim Initialisieren des \texttt{Susan}-Objekts wird ein Feld erzeugt. Das Ziel ist es, alle möglichen Werte, die $c_t$ (siehe \ref{ssec:susan_principle}) annehmen kann, zu speichern.
@@ -206,7 +208,8 @@
 			Regulär werden Felder entweder ab $0$ oder $1$ indiziert. In Python werden Felder ab $0$ indiziert, allerdings bietet Python den Vorteil, dass man mit Index $-i$ das $i$-te Element von hinten abrufen kann. In der Implementation ist diese Lookup-Tabelle dank dieser speziellen Art der Indizierung einfach und elegant: Der Index $a-b$ des Feldes steht für $c_t(a,b)$.
 
 		\subsection{Non-Maximum-Suppression}
-			Um die Non-Maximum-Suppression durchzuführen, wird zunächst für jedes Pixel $(i,j)$ mit $A(i,j) > 0$ die Kantenrichtung $D(i,j)$ bestimmt. Die möglichen Kantenrichtungen werden dann für einen Zwischenschritt kategorisiert. Die Kategorien sind "negativ diagonal", "vertikal", "positiv diagonal" und "horizontal". Die Kategorie bestimmt, welche zwei adjazenten Pixel für die Non-Maximum-Suppression interessant sind.
+			Die Non-Maximum-Suppression ist ein Vorgang, bei eine Kante genauer lokalisiert wird. Entlang einer Kante soll immer nur die maximale Antwort erhalten bleiben.
+			Um die Non-Maximum-Suppression durchzuführen, wird zunächst für jedes Pixel $(i,j)$ mit $A(i,j) > 0$ die Kantenrichtung $D(i,j)$ bestimmt. Die möglichen Kantenrichtungen werden dann für einen Zwischenschritt kategorisiert. Die Kategorien sind \emph{negativ diagonal}, \emph{vertikal}, \emph{positiv diagonal} und \emph{horizontal}. Die Kategorie bestimmt, welche zwei adjazenten Pixel $C$ für die Non-Maximum-Suppression interessant sind.
 			\begin{center}
 				\begin{tabular}{|ll|l|ll|}
 				\hline
@@ -224,8 +227,32 @@
 			\end{center}
 			Für jedes Pixel $(i,j)$ wird nun überprüft, ob $(i,j) = \text{max}(C \cap \{(i,j)\})$ gilt. Gilt es nicht, so wird $A(i,j)$ unterdrückt.
 			
-		\subsection{Lokale Unabhängigkeit und Parallelisierung}
+		\subsection{Parallelisierung}
+			Das SUSAN-Prinzip sieht vor, $A(i,j)$ und $D(i,j)$ immer nur mithilfe von Pixeln aus der Maske auf $(i,j)$ zu berechnen. An dieser Stelle kann die Berechnung von $A$ und $D$ parallelisiert werden. In meiner Implementation liefert das Paket \texttt{multiprocessing} die nötigen Werkzeuge, um die vorhandenen Ressourcen zusammenzuschließen und die Berechnung von $A$ und $D$ parallel abzuarbeiten.
+
+			Der Einfachheit halber habe ich das Bild nur der Höhe nach segmentiert. Eine Segmentierung $\mathcal{S}$ ist eine Menge von nichtnegativen ganzen Zahlen $\{S_1, S_2, ..., S_n, S_{n+1}\}$. Für alle $i \in \{1,2,...,n\}$ arbeitet der Job $J_i$ das Segment $(S_i, S_{i+1}]_\mathbb{Z}$ ab.
 
 
+			Unter der stark vereinfachten Annahme, dass alle Kerne gleich viele Fließkommazahloperationen pro Zeiteinheit abarbeiten können und dadurch gleichgroße Segmente etwa gleichviel Rechenzeit benötigen, gelte folgende Aussage: Eine Segmentierung $\mathcal{S}$ für die gilt $\#\mathcal{S} = n+1$ ist genau dann optimal, wenn für alle Segmente gilt
+			$$|\#(S_i, S_{i+1}]_\mathbb{Z} - \#(S_j, S_{j+1}]_\mathbb{Z}| \leq 1, \quad \forall i \neq j, \quad i,j \in \{1,2,...,n\}$$
+
+			Dann gilt, dass alle Jobs $J_i$ für $i \in \{1,2,...,n\}$ gleichgroße Segmente zugewiesen bekommen.
+
+			Angenommen der Computer, auf dem die Software läuft, besitzt $n$ Kerne, kann also $n$ Jobs gleichzeitig abarbeiten, und ein Bild der Höhe $H$ wird eingegeben. Sei $k := H \text{ mod } n$ und $z := \left\lfloor \frac{H}{n} \right\rfloor$. Dann ist die optimale Segmentierung $\mathcal{S}$ nach der Höhe gegeben durch:
+
+			\begin{align*}
+			S_1 	&= 					0		\\
+			S_2 	&= S_1		+	z + 1		\\
+			S_3 	&= S_2 		+ 	z + 1		\\
+								\vdots			\\
+			S_{k-1} &= S_{k-2}	+ 	z + 1		\\
+			S_{k}	&= S_{k-1} 	+ 	z + 1		\\
+			S_{k+1} &= S_k 		+ 	z			\\
+								\vdots			\\
+			S_{n} 	&= S_{n-1} 	+ 	z 			\\
+			S_{n+1} &= S_{n}	+	z  = H	\\
+			\end{align*}
+
+			
 
 \end{document}
