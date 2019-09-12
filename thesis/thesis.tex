@@ -84,6 +84,7 @@
 \pagestyle{headings}
 
 \chapter{Einführung}
+	Kantendetektoren sind ein wichtiges Werkzeug der Bildverarbeitung...
 
 \chapter{Mathematische Grundlagen}
 	\section{Analytische Grundlagen}
@@ -91,7 +92,7 @@
 	\section{Bildverarbeitung}
 
 \chapter{Der SUSAN Kantendetektor}
-	\section{Der Algorithmus}
+	\section{Der Algorithmus}\label{sec:thealgorithm}
 		Der SUSAN Kantendetektor ...
 
 
@@ -180,7 +181,9 @@
 
 			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess funktioniert.
 
+
 		\subsection{Ausdünnen}
+
 
 		\section{Implementation}\label{sec:implementation}
 		Für meine persönliche Implementation des SUSAN-Kantendetektors in Python 3 habe ich eine Reihe von ausgewählten Gütekriterien aus der Softwaretechnik herangezogen:
@@ -200,45 +203,44 @@
 		\subsection{Vergleichsfunktion}
 			Zu Gunsten der Effizienz habe ich für die Vergleichsfunktion eine Lookup-Tabelle implementiert, wie es auch in [quelle] nahgelegt wurde. Beim Initialisieren des \texttt{Susan}-Objekts wird ein Feld erzeugt. Das Ziel ist es, alle möglichen Werte, die $c_t$ (siehe \ref{ssec:susan_principle}) annehmen kann, zu speichern.
 			In unserem Fall ist $c_t$ folgendermaßen definiert:
-			$$ 
-				c_t(a,b) :=  
-					\text{exp}\bigg(-\Big(\frac{I(a) - I(b)}{t}\Big)^6\bigg)
+			
 			$$
+				c_t(a,b) :=
+					\text{exp}\left(-\left(\frac{I(a) - I(b)}{t}\right)^6\right)
+			$$
+			
 			Ein Pixel in einem 8-bit Graustufenbild kann $2^8 = 256$ mögliche Intensitäten annehmen, demnach braucht das Feld für die Differenz zweier solcher Graustufenintensitäten $512$ Plätze.
 			Regulär werden Felder entweder ab $0$ oder $1$ indiziert. In Python werden Felder ab $0$ indiziert, allerdings bietet Python den Vorteil, dass man mit Index $-i$ das $i$-te Element von hinten abrufen kann. In der Implementation ist diese Lookup-Tabelle dank dieser speziellen Art der Indizierung einfach und elegant: Der Index $a-b$ des Feldes steht für $c_t(a,b)$.
 
 		\subsection{Non-Maximum-Suppression}
-			Die Non-Maximum-Suppression ist ein Vorgang, bei eine Kante genauer lokalisiert wird. Entlang einer Kante soll immer nur die maximale Antwort erhalten bleiben.
+			Die Non-Maximum-Suppression ist ein Vorgang, bei der jede Kante genauer lokalisiert wird. Entlang einer Kante soll immer nur die maximale Antwort erhalten bleiben.
 			Um die Non-Maximum-Suppression durchzuführen, wird zunächst für jedes Pixel $(i,j)$ mit $A(i,j) > 0$ die Kantenrichtung $D(i,j)$ bestimmt. Die möglichen Kantenrichtungen werden dann für einen Zwischenschritt kategorisiert. Die Kategorien sind \emph{negativ diagonal}, \emph{vertikal}, \emph{positiv diagonal} und \emph{horizontal}. Die Kategorie bestimmt, welche zwei adjazenten Pixel $C$ für die Non-Maximum-Suppression interessant sind.
 			\begin{center}
 				\begin{tabular}{|ll|l|ll|}
 				\hline
 				\textbf{Bedingung}					&								& \textbf{Kategorie}			& \textbf{Adjazente $C$} 	&	\\
 				\hline
-													&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$(i+1, j-1)$, 			&$(i-1, j+1)$\\
+													&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$\{(i+1, j-1)$, 			&$(i-1, j+1)\}$\\
 				\hline
-				$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& vertikal 						&$(i-1, j)$, 			&$(i+1, j)$\\
+				$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& vertikal 						&$\{(i-1, j)$, 				&$(i+1, j)\}$\\
 				\hline
-				$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$(i, j-1)$, 			&$(i, j+1)$\\
+				$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$\{(i, j-1)$, 				&$(i, j+1)\}$\\
 				\hline
-				$D(i,j) > -\frac{3}{8}\pi$			&								& horizontal					&$(i+1, j-1)$, 			&$(i-1, j+1)$\\
+				$D(i,j) > -\frac{3}{8}\pi$			&								& horizontal					&$\{(i+1, j-1)$, 			&$(i-1, j+1)\}$\\
 				\hline
 				\end{tabular}
 			\end{center}
-			Für jedes Pixel $(i,j)$ wird nun überprüft, ob $(i,j) = \text{max}(C \cap \{(i,j)\})$ gilt. Gilt es nicht, so wird $A(i,j)$ unterdrückt.
+			Für jedes Pixel $(i,j)$ wird nun überprüft, ob $(i,j) = \text{max}(C \cup \{(i,j)\})$ gilt. Gilt es nicht, so wird $A(i,j)$ unterdrückt.
 			
 		\subsection{Parallelisierung}
-			Das SUSAN-Prinzip sieht vor, $A(i,j)$ und $D(i,j)$ immer nur mithilfe von Pixeln aus der Maske auf $(i,j)$ zu berechnen. An dieser Stelle kann die Berechnung von $A$ und $D$ parallelisiert werden. In meiner Implementation liefert das Paket \texttt{multiprocessing} die nötigen Werkzeuge, um die vorhandenen Ressourcen zusammenzuschließen und die Berechnung von $A$ und $D$ parallel abzuarbeiten.
+			Das SUSAN-Prinzip sieht vor, die Antwort $A(i,j)$ und die Kantenrichtung $D(i,j)$ aus  immer nur mithilfe von Pixeln aus der Maske auf $(i,j)$ zu berechnen. An dieser Stelle kann die Berechnung von $A$ und $D$ parallelisiert werden. In meiner Implementation liefert das Paket \texttt{multiprocessing} die nötigen Werkzeuge, um die vorhandenen Ressourcen zusammenzuschließen und die Berechnung von $A$ und $D$ parallel abzuarbeiten.
 
-			Der Einfachheit halber habe ich das Bild nur der Höhe nach segmentiert. Eine Segmentierung $\mathcal{S}$ ist eine Menge von nichtnegativen ganzen Zahlen $\{S_1, S_2, ..., S_n, S_{n+1}\}$. Für alle $i \in \{1,2,...,n\}$ arbeitet der Job $J_i$ das Segment $(S_i, S_{i+1}]_\mathbb{Z}$ ab.
+			Der Einfachheit halber habe ich das Bild nur der Höhe nach partitioniert. Eine Partitionierung $\mathcal{S}$ ist eine Menge von nichtnegativen ganzen Zahlen $\{S_1, S_2, ..., S_n, S_{n+1}\}$. Für alle $i \in \{1,2,...,n\}$ arbeitet der Job $J_i$ die Partition $(S_i, S_{i+1}]_\mathbb{Z}$ ab.
 
-
-			Unter der stark vereinfachten Annahme, dass alle Kerne gleich viele Fließkommazahloperationen pro Zeiteinheit abarbeiten können und dadurch gleichgroße Segmente etwa gleichviel Rechenzeit benötigen, gelte folgende Aussage: Eine Segmentierung $\mathcal{S}$ für die gilt $\#\mathcal{S} = n+1$ ist genau dann optimal, wenn für alle Segmente gilt
+			Unter der stark vereinfachten Annahme, dass alle Kerne gleich viele Fließkommazahloperationen pro Zeiteinheit abarbeiten können und gleichgroße Partitionen etwa gleichviel Rechenzeit benötigen, gelte folgende Aussage: Eine Partitionierung $\mathcal{S}$ für die gilt $\#\mathcal{S} = n+1$ ist genau dann optimal, wenn für alle Partitionen gilt
 			$$|\#(S_i, S_{i+1}]_\mathbb{Z} - \#(S_j, S_{j+1}]_\mathbb{Z}| \leq 1, \quad \forall i \neq j, \quad i,j \in \{1,2,...,n\}$$
 
-			Dann gilt, dass alle Jobs $J_i$ für $i \in \{1,2,...,n\}$ gleichgroße Segmente zugewiesen bekommen.
-
-			Angenommen der Computer, auf dem die Software läuft, besitzt $n$ Kerne, kann also $n$ Jobs gleichzeitig abarbeiten, und ein Bild der Höhe $H$ wird eingegeben. Sei $k := H \text{ mod } n$ und $z := \left\lfloor \frac{H}{n} \right\rfloor$. Dann ist die optimale Segmentierung $\mathcal{S}$ nach der Höhe gegeben durch:
+			Angenommen der Computer, auf dem die Software läuft, besitzt $n$ Kerne, kann also $n$ Jobs $J_1,J_2,...,J_n$ gleichzeitig abarbeiten, und ein Bild der Höhe $H$ wird eingegeben. Sei $k := H \text{ mod } n$ und $z := \left\lfloor \frac{H}{n} \right\rfloor$. Dann ist die optimale Partitionierung $\mathcal{S}$ nach der Höhe gegeben durch:
 
 			\begin{align*}
 			S_1 	&= 					0		\\
@@ -253,6 +255,13 @@
 			S_{n+1} &= S_{n}	+	z  = H	\\
 			\end{align*}
 
-			
+			Die Jobs $J_1, J_2, ..., J_n$ arbeiten das komplette Bild ab, denn es gilt
+
+			$$ \bigcup_{i=1}^n \left(S_i, S_{i+1}\right]_\mathbb{Z} = (0,H]_\mathbb{Z} = [1,H]_\mathbb{Z}$$
+
+		\section{Rauschunterdrückung}
+
+
+		\section{Numerische Experimente}
 
 \end{document}
