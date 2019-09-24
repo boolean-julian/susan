@@ -222,6 +222,44 @@ class Susan:
 
 
 
+
+
+
+	_cmap = np.array([
+				[255,	0,		0],
+				[255,	255,	0],
+				[0,		255,	0],
+				[255,	0,		255],
+				[255,	0,		0]
+			], dtype='i')
+	def _caffine(self, phi):
+		x = phi/np.pi+0.5
+		l = len(self._cmap)-1
+
+		h = x*l
+
+		if int(h) < l:
+			return np.uint8((1-h%1) * self._cmap[int(h)] + (h%1) * self._cmap[int(h)+1])
+
+		return self._cmap[-1]
+
+	def __make_heatmap(self, filename):
+		A = np.linspace(-np.pi/2,np.pi/2,100)
+		for a in A:
+			self._caffine(a)
+		
+		O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
+		
+		for i in range(self.height):
+			for j in range(self.width):
+				if self.direction[i*self.width+j] == 2:
+					O[i,j] = [0,0,0]
+				else:
+					O[i,j] = self._caffine(self.direction[i*self.width+j])
+		
+		self.save(O, filename + ".png")
+
+
 	_direct_neighbors = np.array([
 						[-1,-1],[-1, 0],[-1, 1],
 						[ 0,-1],        [ 0, 1],
@@ -307,6 +345,53 @@ class Susan:
 						else:
 							pass
 
+	def _overlay(self, filename):
+		O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
+		for i in range(self.height):
+			for j in range(self.width):
+				O[i,j,0] = self.img[i,j]
+				O[i,j,1] = self.img[i,j]
+				O[i,j,2] = self.img[i,j]
+
+		for i in range(self.height):
+			for j in range(self.width):
+				if self.response[i*self.width+j] != 0:
+					O[i,j] = [255,0,0]
+
+		# Overlay for corner detection (to be fixed)
+		"""
+		for i in range(self.height):
+			for j in range(self.width):
+				if R[i,j] > 110 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
+					c = 1
+					O[i-2,	j-2] 	= [0,255,0]
+					O[i-1,	j-2] 	= [0,255,0]
+					O[i, 	j-2] 	= [0,255,0]
+					O[i+1,	j-2]	= [0,255,0]
+					O[i+2,	j-2]	= [0,255,0]
+
+					O[i-2,	j-1]	= [0,255,0]
+					O[i+2,	j-1]	= [0,255,0]
+
+					O[i-2,	j]	= [0,255,0]
+					O[i+2,	j]	= [0,255,0]
+
+					O[i-2,	j+1]	= [0,255,0]
+					O[i+2,	j+1] = [0,255,0]
+
+					O[i-2,	j+2] = [0,255,0]
+					O[i+2,	j+2] = [0,255,0]
+
+					O[i-2,	j+2] 	= [0,255,0]
+					O[i-1,	j+2] 	= [0,255,0]
+					O[i, 	j+2] 	= [0,255,0]
+					O[i+1,	j+2]	= [0,255,0]
+					O[i+2,	j+2]	= [0,255,0]
+		"""
+
+		self.save(O, filename + ".png")
+		
+
 	def __execute_and_wait(self, jobs):
 		for job in jobs:
 			job.start()
@@ -319,54 +404,9 @@ class Susan:
 		self.save(R, filename+".png")
 
 
-	_cmap = np.array([
-				[255,	0,		0],
-				[255,	255,	0],
-				[0,		255,	0],
-				[255,	0,		255],
-				[255,	0,		0]
-			], dtype='i')
-	
-	"""
-	def f(cmap, phi):
-		x = phi/np.pi + 0.5
-		l = len(cmap)-1
-		
-		h = x*l
 
-		if int(h)+1 <= l:
-			return np.uint8((1-h%1) * cmap[int(h)] + (h%1) * cmap[int(h)+1])
-		return cmap[-1]
-	"""
 
-	def _caffine(self, phi):
-		x = phi/np.pi+0.5
-		l = len(self._cmap)-1
-
-		h = x*l
-
-		if int(h) < l:
-			return np.uint8((1-h%1) * self._cmap[int(h)] + (h%1) * self._cmap[int(h)+1])
-
-		return self._cmap[-1]
-
-	def __make_heatmap(self):
-		A = np.linspace(-np.pi/2,np.pi/2,100)
-		for a in A:
-			self._caffine(a)
-		
-		O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
-		
-		for i in range(self.height):
-			for j in range(self.width):
-				if self.direction[i*self.width+j] == 2:
-					O[i,j] = [0,0,0]
-				else:
-					O[i,j] = self._caffine(self.direction[i*self.width+j])
-		
-		return O
-
-	def detect_edges_mp(self, t, filename = "out", geometric = True, nms = True, thin = True, heatmap = False, overlay = True):
+	def detect_edges_mp(self, t, filename = "out", geometric = True, nms = True, thin = False, heatmap = True, overlay = True):
 		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
 		self.direction 	= mp.Array('d', self.width*self.height)
 
@@ -405,10 +445,7 @@ class Susan:
 
 		# Directional heatmap, basically direction of gradient of the edges
 		if heatmap:
-			A = self.__make_heatmap()
-			a = Image.fromarray(np.uint8(A))
-			a.save("heat.png")
-			print("Saved file to heat.png")
+			A = self.__make_heatmap(filename+"_heat")
 
 		# Non-max suppression
 		if nms:
@@ -429,52 +466,8 @@ class Susan:
 			self.__exec_and_save(filename+"_thinned", jobs, chunks)
 
 		# Overlay for edge detection
-		"""
 		if overlay:
-			O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
-			for i in range(self.height):
-				for j in range(self.width):
-					O[i,j,0] = self.img[i,j]
-					O[i,j,1] = self.img[i,j]
-					O[i,j,2] = self.img[i,j]
-
-			for i in range(self.height):
-				for j in range(self.width):
-					if R[i,j] != 0:
-						O[i,j] = [255,0,0]
-
-			# Overlay for corner detection (to be added)
-			
-			for i in range(self.height):
-				for j in range(self.width):
-					if R[i,j] > 110 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
-						c = 1
-						O[i-2,	j-2] 	= [0,255,0]
-						O[i-1,	j-2] 	= [0,255,0]
-						O[i, 	j-2] 	= [0,255,0]
-						O[i+1,	j-2]	= [0,255,0]
-						O[i+2,	j-2]	= [0,255,0]
-
-						O[i-2,	j-1]	= [0,255,0]
-						O[i+2,	j-1]	= [0,255,0]
-
-						O[i-2,	j]	= [0,255,0]
-						O[i+2,	j]	= [0,255,0]
-
-						O[i-2,	j+1]	= [0,255,0]
-						O[i+2,	j+1] = [0,255,0]
-
-						O[i-2,	j+2] = [0,255,0]
-						O[i+2,	j+2] = [0,255,0]
-
-						O[i-2,	j+2] 	= [0,255,0]
-						O[i-1,	j+2] 	= [0,255,0]
-						O[i, 	j+2] 	= [0,255,0]
-						O[i+1,	j+2]	= [0,255,0]
-						O[i+2,	j+2]	= [0,255,0]
-			
-			self.save(O, "overlay_"+filename)
-			"""
+			self._overlay(filename+"_overlay")
 
 
 
