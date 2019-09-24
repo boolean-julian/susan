@@ -2,8 +2,8 @@ import numpy as np
 import sys
 import multiprocessing as mp
 from PIL import Image
-import matplotlib.pyplot as plt
-import seaborn as sns
+
+np.set_printoptions(precision=3)
 
 n_proc = mp.cpu_count()
 
@@ -271,7 +271,9 @@ class Susan:
 								try:
 									if self.response[inbtwn[k]] > 0 and self.direction[inbtwn[k]] > (self.direction[inbtwn[0]]-eps) and self.direction[inbtwn[k]] < (self.direction[inbtwn[0]]+eps):
 										linecnt = k
-							
+								except:
+									pass
+
 							# draw line
 							for k in range(1, linecnt):
 								self.response[inbtwn[k]] = 0.5*self.response[inbtwn[0]] + 0.5*self.response[inbtwn[linecnt]]
@@ -301,7 +303,6 @@ class Susan:
 									ddy = dy[0]-dy[1]
 									if self.response[(i+dx[0]+ddx)+self.width*(j+dy[0]+ddy)] != 0 or self.response[(i+dx[1]+ddx)+self.width*(j+dy[1]+ddy)] != 0:
 										self.response[i+self.width*j] = 0
-
 						
 						else:
 							pass
@@ -316,6 +317,54 @@ class Susan:
 		self.__execute_and_wait(jobs)
 		R = self.__unflatten(self.response)/max(self.response)*255
 		self.save(R, filename+".png")
+
+
+	_cmap = np.array([
+				[255,	0,		0],
+				[255,	255,	0],
+				[0,		255,	0],
+				[255,	0,		255],
+				[255,	0,		0]
+			], dtype='i')
+	
+	"""
+	def f(cmap, phi):
+		x = phi/np.pi + 0.5
+		l = len(cmap)-1
+		
+		h = x*l
+
+		if int(h)+1 <= l:
+			return np.uint8((1-h%1) * cmap[int(h)] + (h%1) * cmap[int(h)+1])
+		return cmap[-1]
+	"""
+
+	def _caffine(self, phi):
+		x = phi/np.pi+0.5
+		l = len(self._cmap)-1
+
+		h = x*l
+
+		if int(h) < l:
+			return np.uint8((1-h%1) * self._cmap[int(h)] + (h%1) * self._cmap[int(h)+1])
+
+		return self._cmap[-1]
+
+	def __make_heatmap(self):
+		A = np.linspace(-np.pi/2,np.pi/2,100)
+		for a in A:
+			self._caffine(a)
+		
+		O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
+		
+		for i in range(self.height):
+			for j in range(self.width):
+				if self.direction[i*self.width+j] == 2:
+					O[i,j] = [0,0,0]
+				else:
+					O[i,j] = self._caffine(self.direction[i*self.width+j])
+		
+		return O
 
 	def detect_edges_mp(self, t, filename = "out", geometric = True, nms = True, thin = True, heatmap = False, overlay = True):
 		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
@@ -356,8 +405,10 @@ class Susan:
 
 		# Directional heatmap, basically direction of gradient of the edges
 		if heatmap:
-			sns.heatmap(self.__unflatten(self.direction), cmap="YlGnBu")
-			plt.savefig(filename+"_heatmap.png")
+			A = self.__make_heatmap()
+			a = Image.fromarray(np.uint8(A))
+			a.save("heat.png")
+			print("Saved file to heat.png")
 
 		# Non-max suppression
 		if nms:
