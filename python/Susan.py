@@ -7,7 +7,7 @@ np.set_printoptions(precision=3)
 
 n_proc = mp.cpu_count()
 
-_mask37_rad = 3.4
+_mask37_rad = 2+np.sqrt(2)
 _mask37 = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -18,7 +18,7 @@ _mask37 = np.matrix([
 		[0,0,1,1,1,0,0]
 	], dtype='?')
 
-_mask9_rad = 1.4
+_mask9_rad = np.sqrt(2)
 _mask9 = np.matrix([
 	[1,1,1],
 	[1,1,1],
@@ -152,8 +152,8 @@ class Susan:
 							i_cog += x * curr
 							j_cog += y * curr
 
-							i2_intra += r[0]**2 * curr
-							j2_intra += r[1]**2 * curr
+							i2_intra += (r[0]**2) * curr
+							j2_intra += (r[1]**2) * curr
 							ij_intra += r[0] * r[1] * curr
 
 						else:
@@ -166,26 +166,35 @@ class Susan:
 				direction = 2	# 'no edge' marker
 				if geometric - usan_value > 0:
 					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
-
+					#distance_from_cog = i_cog-i + j_cog-j
+					
 					# inter pixel case
-					if usan_area >= diam and distance_from_cog >= 1:
+					if usan_area > diam and distance_from_cog > 1:
 						if j_cog != j:
-							direction = np.arctan((i_cog - i)/(j_cog - j))
+							direction = np.arctan((i-i_cog)/(j-j_cog))
+					
 						else:
 							direction = np.pi/2
+							
 
 					# intra pixel case
 					elif i2_intra != 0:
-						direction = -1 * np.sign(ij_intra) * np.arctan(j2_intra/i2_intra)
+						phi = (j2_intra/i2_intra)
+						if ij_intra == 0:
+							direction = np.arctan(phi)
+						else:
+							direction = -1 * np.sign(ij_intra) * np.arctan(phi)
 
 					else:
 						direction = np.pi/2
-
 
 				index = i*self.width+j
 				self.direction[index]	= direction
 				self.response[index] 	= max(0, geometric - usan_value)
 
+	# classification of direction and non max suppression
+	# keep in mind that the directional values for each pixel are stored in self.direction
+	# which is computed in the _nbd_compare_mp function
 	_orientations = np.pi*np.array([-0.375, -0.125, 0.125, 0.375])
 	def _suppress_nonmax_mp(self, start, end):
 		for i in range(start, end):
@@ -221,10 +230,7 @@ class Susan:
 							self.response[index] = 0
 
 
-
-
-
-
+	# heat map visualization for self.direction
 	_cmap = np.array([
 				[255,	0,		0],
 				[255,	255,	0],
@@ -232,6 +238,7 @@ class Susan:
 				[255,	0,		255],
 				[255,	0,		0]
 			], dtype='i')
+
 	def _caffine(self, phi):
 		x = phi/np.pi+0.5
 		l = len(self._cmap)-1
@@ -260,6 +267,8 @@ class Susan:
 		self.save(O, filename + ".png")
 
 
+
+	# thinning algorithm - this needs to be thoroughly improved.
 	_direct_neighbors = np.array([
 						[-1,-1],[-1, 0],[-1, 1],
 						[ 0,-1],        [ 0, 1],
@@ -362,7 +371,7 @@ class Susan:
 		"""
 		for i in range(self.height):
 			for j in range(self.width):
-				if R[i,j] > 110 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
+				if self.response[i*self.width+j] > 15 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
 					c = 1
 					O[i-2,	j-2] 	= [0,255,0]
 					O[i-1,	j-2] 	= [0,255,0]
@@ -406,7 +415,7 @@ class Susan:
 
 
 
-	def detect_edges_mp(self, t, filename = "out", geometric = True, nms = True, thin = False, heatmap = True, overlay = True):
+	def detect_edges_mp(self, t, filename, geometric = True, nms = True, thin = False, heatmap = True, overlay = True):
 		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
 		self.direction 	= mp.Array('d', self.width*self.height)
 
