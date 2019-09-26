@@ -7,7 +7,7 @@ np.set_printoptions(precision=3)
 
 n_proc = mp.cpu_count()
 
-_mask37_rad = 2+np.sqrt(2)
+_mask37_rad = 3.4
 _mask37 = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -18,7 +18,7 @@ _mask37 = np.matrix([
 		[0,0,1,1,1,0,0]
 	], dtype='?')
 
-_mask9_rad = np.sqrt(2)
+_mask9_rad = 1.4
 _mask9 = np.matrix([
 	[1,1,1],
 	[1,1,1],
@@ -162,14 +162,16 @@ class Susan:
 				i_cog = i_cog / usan_value
 				j_cog = j_cog / usan_value
 
+				self.i_cogs[i*self.width+j] = i_cog
+				self.j_cogs[i*self.width+j] = j_cog
+
 				# get direction for non max suppression
 				direction = 2	# 'no edge' marker
 				if geometric - usan_value > 0:
-					distance_from_cog = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
-					#distance_from_cog = i_cog-i + j_cog-j
+					self.dist_from_cog[i*self.width+j] = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
 					
 					# inter pixel case
-					if usan_area > diam and distance_from_cog > 1:
+					if usan_area > diam and self.dist_from_cog[i*self.width+j] > 1:
 						if j_cog != j:
 							direction = np.arctan((i-i_cog)/(j-j_cog))
 					
@@ -354,7 +356,57 @@ class Susan:
 						else:
 							pass
 
-	def _overlay(self, filename):
+
+	def _detect_corners(self, start, end, delta_g):
+		# get corners from edge detection response
+		for i in range(start, end):
+			for j in range(self.width):
+				
+				# if pixel is too close to cog, it's not a corner
+				if self.dist_from_cog[i*self.width+j] <= np.sqrt(2):
+						continue
+
+				# check if pixels on the way to center of gravity lie in the USAN, only then we have a corner candidate
+				flag = True
+				
+				i_dist = int(np.round(self.i_cogs[i*self.width+j]-i,0))
+				j_dist = int(np.round(self.j_cogs[i*self.width+j]-j,0))
+
+				maxdist = max(i_dist, j_dist)
+				for k in range(1, maxdist+1):
+					x = int(np.round(i_dist/k,0))
+					y = int(np.round(j_dist/k,0))
+					
+					print(k,i,j,x+i, y+j)
+
+					if self.response[(x+i)*self.width+(y+j)] == 0:
+						flag = False
+				
+				if flag:
+					self.corners[i*self.width+j] = max(0, self.response[i*self.width+j] - delta_g)
+
+
+		# suppress everything that is not a local maximum
+		for i in range(start, end):
+			if i >= 1 and i < self.height:
+				for j in range(self.width):
+					if self.corners[i*self.width+j] > 0:
+						for r in self._direct_neighbors:
+							x = i+r[0]
+							y = j+r[1]
+
+							if x >= 0 and x < self.height and y >= 0 and y < self.width:
+								if self.corners[i*self.width+j]	<= self.corners[x*self.width+y]:
+									self.corners[i*self.width+j] = 0
+									break
+						
+
+
+
+
+
+
+	def _overlay(self, filename, corners = False):
 		O = np.array([[[0]*3]*self.width]*self.height, dtype="i")
 		for i in range(self.height):
 			for j in range(self.width):
@@ -365,38 +417,38 @@ class Susan:
 		for i in range(self.height):
 			for j in range(self.width):
 				if self.response[i*self.width+j] != 0:
-					O[i,j] = [255,0,0]
+					O[i,j] = [(self.response[i*self.width+j]+2*255)/3,0,0]
 
 		# Overlay for corner detection (to be fixed)
-		"""
-		for i in range(self.height):
-			for j in range(self.width):
-				if self.response[i*self.width+j] > 15 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
-					c = 1
-					O[i-2,	j-2] 	= [0,255,0]
-					O[i-1,	j-2] 	= [0,255,0]
-					O[i, 	j-2] 	= [0,255,0]
-					O[i+1,	j-2]	= [0,255,0]
-					O[i+2,	j-2]	= [0,255,0]
+		if corners:
+			for i in range(self.height):
+				for j in range(self.width):
+					v = self.corners[i*self.width+j]
+					if v > 0 and i < self.height-2 and j < self.width-2 and i > 2 and j > 2:
+						color = [0,255,0]
+						O[i-2,	j-2] 	= color
+						O[i-1,	j-2] 	= color
+						O[i, 	j-2] 	= color
+						O[i+1,	j-2]	= color
+						O[i+2,	j-2]	= color
 
-					O[i-2,	j-1]	= [0,255,0]
-					O[i+2,	j-1]	= [0,255,0]
+						O[i-2,	j-1]	= color
+						O[i+2,	j-1]	= color
 
-					O[i-2,	j]	= [0,255,0]
-					O[i+2,	j]	= [0,255,0]
+						O[i-2,	j]		= color
+						O[i+2,	j]		= color
 
-					O[i-2,	j+1]	= [0,255,0]
-					O[i+2,	j+1] = [0,255,0]
+						O[i-2,	j+1]	= color
+						O[i+2,	j+1] 	= color
 
-					O[i-2,	j+2] = [0,255,0]
-					O[i+2,	j+2] = [0,255,0]
+						O[i-2,	j+2] 	= color
+						O[i+2,	j+2] 	= color
 
-					O[i-2,	j+2] 	= [0,255,0]
-					O[i-1,	j+2] 	= [0,255,0]
-					O[i, 	j+2] 	= [0,255,0]
-					O[i+1,	j+2]	= [0,255,0]
-					O[i+2,	j+2]	= [0,255,0]
-		"""
+						O[i-2,	j+2] 	= color
+						O[i-1,	j+2] 	= color
+						O[i, 	j+2] 	= color
+						O[i+1,	j+2]	= color
+						O[i+2,	j+2]	= color
 
 		self.save(O, filename + ".png")
 		
@@ -407,7 +459,7 @@ class Susan:
 		for job in jobs:
 			job.join()
 
-	def __exec_and_save(self, filename, jobs, chunks):
+	def __execute_and_save(self, filename, jobs, chunks):
 		self.__execute_and_wait(jobs)
 		R = self.__unflatten(self.response)/max(self.response)*255
 		self.save(R, filename+".png")
@@ -415,9 +467,15 @@ class Susan:
 
 
 
-	def detect_edges_mp(self, t, filename, geometric = True, nms = True, thin = False, heatmap = True, overlay = True):
-		self.response 	= mp.Array('d', self.width*self.height) # shared array for final image (flat)
-		self.direction 	= mp.Array('d', self.width*self.height)
+	def detect_edges_mp(self, t, filename, geometric = True, nms = True, thin = False, heatmap = True, overlay = True, corners = False):
+		self.response 		= mp.Array('d', self.width*self.height)
+		self.direction 		= mp.Array('d', self.width*self.height)
+		
+		self.corners 		= mp.Array('d', self.width*self.height)
+		
+		self.i_cogs 		= mp.Array('d', self.width*self.height)
+		self.j_cogs		 	= mp.Array('d', self.width*self.height)
+		self.dist_from_cog 	= mp.Array('d', self.width*self.height)
 
 		if not self._has_lut:
 			self._init_lut(t)
@@ -450,7 +508,7 @@ class Susan:
 		]
 
 		# No non-max suppression
-		self.__exec_and_save(filename+"_raw", jobs, chunks)
+		self.__execute_and_save(filename+"_raw", jobs, chunks)
 
 		# Directional heatmap, basically direction of gradient of the edges
 		if heatmap:
@@ -463,7 +521,7 @@ class Susan:
 					args = (chunks[i], chunks[i+1]))
 					for i in range(len(chunks)-1)
 			]
-			self.__exec_and_save(filename+"_nonmax_supp", jobs, chunks)
+			self.__execute_and_save(filename+"_nonmax_supp", jobs, chunks)
 
 		# Thinning (not done yet)
 		if thin:
@@ -472,12 +530,21 @@ class Susan:
 					args = (chunks[i], chunks[i+1]))
 					for i in range(len(chunks)-1)
 			]
-			self.__exec_and_save(filename+"_thinned", jobs, chunks)
+			self.__execute_and_save(filename+"_thinned", jobs, chunks)
+
+		# SUSAN corner detection
+		if corners:
+			delta_g = 0.25 * self.nbd_size
+			jobs = [mp.Process(
+					target = self._detect_corners,
+					args = (chunks[i], chunks[i+1], delta_g))
+					for i in range(len(chunks)-1)
+			]
+			self.__execute_and_wait(jobs)
 
 		# Overlay for edge detection
 		if overlay:
-			self._overlay(filename+"_overlay")
-
+			self._overlay(filename+"_overlay", corners)
 
 
 
@@ -503,40 +570,3 @@ class Susan:
 		except:
 			print("Error: Couldn't save", filename)
 			return
-
-
-
-
-	""" deprecated
-	# n from paper
-	def _nbd_compare(self, i, j, t):
-		s = 0
-		for r in np.array(self.mask_nbd):
-			x = i+r[0]
-			y = j+r[1]
-			if x >= 0 and x < self.height and y >= 0 and y < self.width:
-				c = self.compare(self.img, (i,j), (x,y), t)
-				s += c
-		return s
-
-
-	def detect_edges(self, t, filename = "out.png", geometric = False):
-		r = self.img.copy()
-
-		if not self._has_lut:
-			self._init_lut(t)
-
-		if geometric:
-			g = .75*self.nbd_size
-		else:
-			g = self.nbd_size
-
-		directions = np.array([[0]*self.width]*self.height)
-		max_response = 1
-		for i in range(self.height):
-			for j in range(self.width):
-				r[i,j] = max(0, g - self._nbd_compare(i,j,t))
-				if r[i,j] > max_response:
-					max_response = r[i,j]
-		self.save(r/max_response*255, filename)
-	"""
