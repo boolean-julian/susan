@@ -276,85 +276,79 @@ class Susan:
 						[ 0,-1],        [ 0, 1],
 						[ 1,-1],[ 1, 0],[ 1, 1]
 	])
+
+	def __approx(self, a, b, eps):
+		return a + eps > b and a - eps < b
+
 	def _thinout(self, start, end):
 		# maximum reach of line completion
 		maxlen = 3
+
+		# rotational slack
+		eps = np.pi/32
+
 		for i in range(start, end):
-			if i >= maxlen+1 and i < self.height-maxlen-1:
-				for j in range(maxlen+1,self.width-maxlen-1):
-					if self.response[i+self.width*j] > 0:
-						neighbor_count = 0
-						dx = []
-						dy = []
-						for r in self._direct_neighbors:
-							x = i+r[0]
-							y = j+r[1]
+			for j in range(1,self.width-1):
+				if self.response[i*self.width+j] > 0:
+					neighbor_count = 0
+					dx = []
+					dy = []
+					for r in self._direct_neighbors:
+						x = i+r[0]
+						y = j+r[1]
 
-							# filter direct neighbors with response
-							if x >= 0 and x < self.height and y >= 0 and y < self.width:
-								if self.response[x+self.width*y] > 0:
-									neighbor_count += 1
-									dx.append(r[0])
-									dy.append(r[1])
-
+						# filter direct neighbors with response
+						if x >= 0 and x < self.height and y >= 0 and y < self.width:
+							if self.response[x*self.width+y] > 0:
+								neighbor_count += 1
+								dx.append(r[0])
+								dy.append(r[1])
 
 
-						### cases for number of neighbors ###
 
-						# probably a false positive
-						if neighbor_count == 0:
-							self.response[i+self.width*j] = 0
+					### cases for number of neighbors ###
+
+					# probably a false positive
+					if neighbor_count == 0:
+						self.response[i*self.width+j] = 0
 
 
-						# try line completion if only one neighbor
-						elif neighbor_count == 1:
+					# try line completion if only one neighbor
+					elif neighbor_count == 1:
+						if dx[0] != 0 and dy[0] != 0:
+							if self.response[(i+2*dx[0])*self.width+j] > 0 and self.response[i*self.width+(j+2*dy[0])] > 0:
+								self.response[i*self.width+j] = 0
+
+						if i >= maxlen+1 and i < self.height-maxlen-1 and j >= maxlen+1 and j < self.width-maxlen-1:
 							# create array to mark pixels for line completion. will only complete line if direction of the "other side" matches.
 							inbtwn = np.zeros(maxlen+2, dtype="i")
 							linecnt = 0
 							for k in range(len(inbtwn)):
-								inbtwn[k] = (i-k*dx[0])+self.width*(j-k*dy[0])
+								inbtwn[k] = (i-k*dx[0])*self.width+(j-k*dy[0])
+
 
 							# rotational slackness
 							for k in range(1,maxlen+2):
-								eps = np.pi/32
-								try:
-									if self.response[inbtwn[k]] > 0 and self.direction[inbtwn[k]] > (self.direction[inbtwn[0]]-eps) and self.direction[inbtwn[k]] < (self.direction[inbtwn[0]]+eps):
+								if inbtwn[k] < self.width*self.height and inbtwn[k] > 0:
+									if self.response[inbtwn[k]] > 0 and self.__approx(self.direction[inbtwn[k]], self.direction[inbtwn[0]], eps):
 										linecnt = k
-								except:
-									pass
-
+							
 							# draw line
 							for k in range(1, linecnt):
 								self.response[inbtwn[k]] = 0.5*self.response[inbtwn[0]] + 0.5*self.response[inbtwn[linecnt]]
-
-
-						elif neighbor_count == 2:
-							# check taxicab distance between the two found neighbors
-							# (this allows for very quick case by case analysis without use of tedious matching algorithms)
-							# (taxicab == 1,3,4 are always ok)
-							taxicab = np.absolute(dx[0]-dx[1]) + np.absolute(dy[0]-dy[1])
-							if taxicab == 2:
-								# horizontal and vertical lines
-								if dx[0] != 0 and dy[0] != 0:
-									if dx[0] == dx[1]:
-										if self.response[(i+dx[0])+self.width*(j+2*dy[0])] != 0 or self.response[(i+dx[0])+self.width*(j-2*dy[0])] != 0:
-											self.response[i+dx[0]+self.width*j] = self.response[i+self.width*j]
-											self.response[i+self.width*j] = 0
-									
-									else: # dy[0] == dy[1] (since taxicab == 2)
-										if self.response[(i+2*dx[0])+self.width*(j+dy[0])] != 0 or self.response[(i-2*dx[0])+self.width*(j+dy[0])] != 0:
-											self.response[i+self.width*(j+dy[0])] = self.response[i+self.width*j]
-											self.response[i+self.width*j] = 0	
-								
-								# diagonal lines
-								else:
-									ddx = dx[0]-dx[1]
-									ddy = dy[0]-dy[1]
-									if self.response[(i+dx[0]+ddx)+self.width*(j+dy[0]+ddy)] != 0 or self.response[(i+dx[1]+ddx)+self.width*(j+dy[1]+ddy)] != 0:
-										self.response[i+self.width*j] = 0
 						
-						else:
-							pass
+					
+					elif neighbor_count == 2:
+						if dx[0] + dx[1] != 0 and dy[0] + dy[1] != 0:
+							if self.__approx(self.direction[(dx[0]+i)*self.width+(dy[0]+j)], self.direction[(dx[1]+i)*self.width+(dy[1]+j)], eps):
+								self.response[i*self.width+j] = 0
+						
+					elif neighbor_count == 3:
+						if (dx[0] == dx[1] and dx[1] == dx[2]) or (dy[0] == dy[1] and dy[1] == dy[2]):
+							self.response[i*self.width+j] = 0 
+
+					else:
+						pass
 
 
 	def _detect_corners(self, start, end, delta_g):
@@ -369,15 +363,13 @@ class Susan:
 				# check if pixels on the way to center of gravity lie in the USAN, only then we have a corner candidate
 				flag = True
 				
-				i_dist = int(np.round(self.i_cogs[i*self.width+j]-i,0))
-				j_dist = int(np.round(self.j_cogs[i*self.width+j]-j,0))
+				i_dist = int(np.round(self.i_cogs[i*self.width+j],0)) - i
+				j_dist = int(np.round(self.j_cogs[i*self.width+j],0)) - j
 
 				maxdist = max(i_dist, j_dist)
-				for k in range(1, maxdist+1):
+				for k in range(2, maxdist+1):
 					x = int(np.round(i_dist/k,0))
 					y = int(np.round(j_dist/k,0))
-					
-					print(k,i,j,x+i, y+j)
 
 					if self.response[(x+i)*self.width+(y+j)] == 0:
 						flag = False
