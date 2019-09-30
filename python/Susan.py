@@ -347,9 +347,6 @@ class Susan:
 						if (dx[0] == dx[1] and dx[1] == dx[2]) or (dy[0] == dy[1] and dy[1] == dy[2]):
 							self.response[i*self.width+j] = 0 
 
-					else:
-						pass
-
 
 	def _detect_corners(self, start, end, delta_g):
 		# get corners from edge detection response

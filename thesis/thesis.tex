@@ -88,10 +88,38 @@
 
 \chapter{Mathematische Grundlagen}
 	\section{Analytische Grundlagen}
-		
 
 	\section{Varianzanalyse}
 	\section{Bildverarbeitung}
+		In der digitalen Bildverarbeitung für Graustufenbilder betrachten wir Abbildungen der Form
+		$$ I: [0, H-1]_\mathbb{Z} \times [0, B-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}. $$
+		Solche Abbildungen werden im weiteren Verlauf dieser Arbeit schlichtweg als Bilder bezeichnet. $H$ steht für die Höhe und $B$ für die Breite des Bildes. Ferner steht $0$für schwarz und $255$ für weiß.
+		
+		Eines der wichtigen Instrumente der Bilderverarbeitung ist die Faltung. Da die Faltung allerdings nur für Funktionen definiert wird und die Abbildung $I$ keine Funktion ist, müssen wir die Faltung für den diskreten Fall neu definieren. Diese Definition trägt den Namen Filtermaske.
+		Eine Filtermaske ist eine Matrix $k \in \mathbb{R}^{n \times m}$, die folgendermaßen Anwendung findet:
+		$$ O(x,y) = \sum_{i=0}^{n-1} \sum_{j=0}^{m-1} k(i,j) \cdot I(x-i+a, y-j+b),$$
+		wobei $(a,b)$ der Nucleus der Filtermaske ist, $I$ das Eingangsbild und $O$ das neu gewonnene Bild.
+		Wir schreiben, wie bei der Faltung,
+		$$ O = k * I $$
+
+		Ein Beispiel für eine solche Filtermaske bietet der sogenannte Gaußsche Weichzeichner. Im stetigen Fall würde man ihn anwenden, indem man eine Funktion mit der Funktion der Normalverteilung in zwei Dimensionen faltet. Die Funktion der Normalverteilung lautet:
+		$$ g(x,y) := \frac{1}{\sigma \sqrt{2\pi}} e ^{-\frac{x^2 + y^2}{2\sigma^2}} $$
+		Im Fall von digitalen Bildern kennen wir nur diskrete Bildpunkte, also muss eine Approximation genügen. Man wähle eine Größe $n = m$ der Filtermaske und summiere für $x,y \in [-n, n]_\mathbb{Z}$ jeweils
+		$$G(x,y) = \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} g(x+\frac{i}{N},y+\frac{j}{N})$$ 
+		für ein passendes $\sigma$ und ein großes $N$ (eine Faustregel dafür lautet, dass die Normalverteilung in ungefähr drei Standardabweichungen $\sigma$ nah an Null ist). So erhält man eine Filtermaske
+		$$\frac{1}{273}
+		\begin{pmatrix}
+			1&4&7&4&1\\
+			4&16&26&16&4\\
+			7&26&41&26&7\\
+			4&16&26&16&4\\
+			1&4&7&4&1
+		\end{pmatrix}.$$
+ 		für $\sigma = 1$, $N = 1000$ und $n = 2$.
+		
+
+
+ 		
 
 \chapter{Der SUSAN Kantendetektor}
 	In diesem Kapitel wird der Algorithmus angegeben, danach werden einige Details zur Implementation des Algorithmus in Python 3 erläutert. Im dritten Abschnitt wird bewiesen, dass der SUSAN-Kantendetektor funktioniert und im letzten Teil werden ein paar numerische Experimente durchgeführt.
@@ -193,8 +221,19 @@
 			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess implementiert wurde.
 
 		\subsection{Ausdünnen}
-			Da viele digitale Bilder eingangs mit Rauschen behaftet sind, ist es manchmal hilfreich, einzelne Antworten zu entfernen und dafür andere hinzuzufügen. So zum Beispiel, falls eine Kante 
-			Zusätzlich zur Non-Maximum Suppression ist es hilfreich, einzelne Pixel zu entfernen, zu verschieben und 
+			Da viele digitale Bilder eingangs mit Rauschen behaftet sind, ist es manchmal hilfreich, einzelne Antworten zu entfernen und dafür andere hinzuzufügen. Zu diesem Zwecke empfiehlt [ref], dass man einige der Kanten ausdünnt. Dieser Vorgang wird genauer in [ref] beschrieben, wurde aber meinerseits modifiziert.
+			Es wird erneut über das ganze Bild iteriert. Jedes Pixel $(i,j)$ mit einer Antwort $A(i,j) > 0$ wird auf die Anzahl seiner direkten Nachbarn mit $A(x,y) > 0$ überprüft. Als direkte Nachbarschaft werden die acht nächsten Pixel bezeichnet, siehe dazu [grafik]. Angenommen, das Pixel hat...
+			\begin{itemize}
+				\item \textbf{0 Nachbarn:}
+					Entferne die Antwort des Pixels.
+				\item \textbf{1 Nachbar:}
+					Überprüfe, ob in einer Reichweite von 3 Pixeln eine Linie mit der gleichen Richtung existiert. Falls ja, verbinde die Pixel miteinander.
+				\item \textbf{2 Nachbarn:}
+					Falls das Pixel adjazent zu einer diagonalen Linie ist, entferne es.
+					Falls das Pixel außerhalb einer sonst horizontalen oder vertikalen Linie liegt, verschiebe die Antwort des Pixels in die Lücke der vertikalen oder horizontalen Linie
+				\item \textbf{3 Nachbarn:}
+					Falls die drei Nachbarn in einer Linie liegen, entferne die Antwort des Pixels.
+			\end{itemize}
 
 
 		\section{Implementation}\label{sec:implementation}
@@ -276,8 +315,41 @@
 
 		\section{Rauschunterdrückung}
 
-
 		\section{Numerische Experimente}
+
+		\section{Heuristik}
+			Für diese Heuristik nehmen wir an, dass das Bild eingangs eine Bildfunktion $I: \mathbb{R}\to \mathbb{R}$ ist.
+			Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$ eine untere Grenze $x_0+a(x_0)$ und eine obere Grenze $x-b(x_0)$ der USAN.
+			Dann gilt an den Grenzen:
+			\begin{align*}
+				I(x_0 + a(x_0)) &= I(x_0) + t \\
+				I(x_0 - b(x_0)) &= I(x_0) - t.
+			\end{align*}
+			Das Prinzip des SUSAN-Kantendetektors lässt sich folgendermaßen formulieren: An genau den Stellen, an denen $n(x_0) = a(x_0) + b(x_0)$ ein Minimum hat, ist die Antwort $A(x_0) > 0$. Wir erhalten unter der Annahme, dass $n$ an $x_0$ ein lokales Minimum erreicht:
+			$$ n'(x_0) = a'(x_0) + b'(x_0) = 0 $$
+			Die obigen Gleichungen können wir nach $a$ und $b$ umstellen. So erhalten wir
+			\begin{align*}
+				a(x_0) = x_0 - x(I(x_0) + t) \\
+				b(x_0) = x(I(x_0) - t) - x_0,
+			\end{align*}
+			wobei $x$ die Position ist.
+			Damit ist $n(x_0) = x(I(x_0) + t) - x(I(x_0) - t)$ und daraus folgt
+			$$ n'(x_0) = x'(I(x_0) + t) \cdot I'(x_0) - x'(I(x_0) - t) \cdot I'(x_0) = 0,$$
+			anders formuliert,
+			$$ x'(I(x_0) + t) \cdot I'(x_0) = x'(I(x_0) - t) \cdot I'(x_0) $$
+			und damit $$x'(I(x_0) + t) = x'(I(x_0) - t),$$
+			falls die Bildfunktion nicht konstant ist.
+ 			Es folgt 
+ 			$$(I(x_0) + t)' = (I(x_0) - t)'.$$
+ 			Lassen wir $t$ gegen Null laufen, so finden wir
+ 			$$\lim_{t\to 0}\; (I(x_0) + t)' - (I(x_0) - t)' = I''(x_0) = 0. $$
+
+ 			Demnach treffen sich die maximale Antwort des SUSAN-Kantendetektors und die zweite Ableitung der Bildfunktion. Es sei dazu gesagt, dass jegliche Ableitungen nur zum Zwecke der Demonstration dienen. Im tatsächlichen SUSAN-Kantendetektor wird keine Ableitung auf dem diskreten Bild berechnet.
+
+
+
+
+			
 
 
 % zu den quellen:
