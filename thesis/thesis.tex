@@ -18,6 +18,7 @@
 \usepackage{subcaption}
 \usepackage{cleveref}
 \usepackage{tikz}
+\usepackage{textcomp}
 \usepackage[main=ngerman]{babel}
 \hypersetup{hypertexnames=false}
 
@@ -93,9 +94,9 @@
 	\section{Bildverarbeitung}
 		In der digitalen Bildverarbeitung für Graustufenbilder betrachten wir Abbildungen der Form
 		$$ I: [0, H-1]_\mathbb{Z} \times [0, B-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}. $$
-		Solche Abbildungen werden im weiteren Verlauf dieser Arbeit schlichtweg als Bilder bezeichnet. $H$ steht für die Höhe und $B$ für die Breite des Bildes. Ferner steht $0$für schwarz und $255$ für weiß.
+		Solche Abbildungen werden im weiteren Verlauf dieser Arbeit schlichtweg als Bilder bezeichnet. $H$ steht für die Höhe und $B$ für die Breite des Bildes. Ferner steht $0$ für schwarz und $255$ für weiß.
 		
-		Eines der wichtigen Instrumente der Bilderverarbeitung ist die Faltung. Da die Faltung allerdings nur für Funktionen definiert wird und die Abbildung $I$ keine Funktion ist, müssen wir die Faltung für den diskreten Fall neu definieren. Diese Definition trägt den Namen Filtermaske.
+		Eines der wichtigen Instrumente der Bildverarbeitung ist die Faltung. Da die Faltung allerdings nur für Funktionen definiert wird und die Abbildung $I$ keine Funktion ist, müssen wir die Faltung für den diskreten Fall neu definieren. Diese Definition trägt den Namen Filtermaske.
 		Eine Filtermaske ist eine Matrix $k \in \mathbb{R}^{n \times m}$, die folgendermaßen Anwendung findet:
 		$$ O(x,y) = \sum_{i=0}^{n-1} \sum_{j=0}^{m-1} k(i,j) \cdot I(x-i+a, y-j+b),$$
 		wobei $(a,b)$ der Nucleus der Filtermaske ist, $I$ das Eingangsbild und $O$ das neu gewonnene Bild.
@@ -103,11 +104,11 @@
 		$$ O = k * I $$
 
 		Ein Beispiel für eine solche Filtermaske bietet der sogenannte Gaußsche Weichzeichner. Im stetigen Fall würde man ihn anwenden, indem man eine Funktion mit der Funktion der Normalverteilung in zwei Dimensionen faltet. Die Funktion der Normalverteilung lautet:
-		$$ g(x,y) := \frac{1}{\sigma \sqrt{2\pi}} e ^{-\frac{x^2 + y^2}{2\sigma^2}} $$
+		$$ g(x,y) := \frac{1}{\sigma \sqrt{2\pi}} e ^{-\frac{x^2 + y^2}{2\sigma^2}}. $$
 		Im Fall von digitalen Bildern kennen wir nur diskrete Bildpunkte, also muss eine Approximation genügen. Man wähle eine Größe $n = m$ der Filtermaske und summiere für $x,y \in [-n, n]_\mathbb{Z}$ jeweils
 		$$G(x,y) = \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} g(x+\frac{i}{N},y+\frac{j}{N})$$ 
-		für ein passendes $\sigma$ und ein großes $N$ (eine Faustregel dafür lautet, dass die Normalverteilung in ungefähr drei Standardabweichungen $\sigma$ nah an Null ist). So erhält man eine Filtermaske
-		$$\frac{1}{273}
+		für ein passendes $\sigma$ und ein großes $N$. Die Größe der Filtermaske bestimmt sich in diesem Fall über das gewählte $\sigma$. Eine Faustregel dafür lautet, dass falls $\sqrt{\hat x^2 + \hat y^2} \geq 3\sigma$ gilt, auch $g(\hat x,\hat y) \approx 0$ gilt. Ausgehend davon können wir $n = \lfloor3\sigma\rfloor-1$ wählen und erhalten somit die Filtermaske
+		$$G = \frac{1}{273}
 		\begin{pmatrix}
 			1&4&7&4&1\\
 			4&16&26&16&4\\
@@ -115,53 +116,89 @@
 			4&16&26&16&4\\
 			1&4&7&4&1
 		\end{pmatrix}.$$
- 		für $\sigma = 1$, $N = 1000$ und $n = 2$.
-		
+ 		für $\sigma = 1$, $N = 1000$ und $n = 2$. Wenden wir nun unseren Operator $G$ auf folgendes linkes Bild an, so erhalten wir das nachstehende rechte Bild:
+		\begin{center}
+			\begin{figure}[h]
+				\begin{minipage}{.475\textwidth} \centering \small
+					\begin{tikzpicture}[fill=black, text=white]
+						\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+							|[fill]|0	&|[fill]|0	&|[fill]|0	&|[text=black, fill=white]|255	&|[fill]|0	&|[fill]|0	&|[fill]|0\\
+						};
+					\end{tikzpicture}
+				\end{minipage}
+				\begin{minipage}{.05\textwidth}
+					\centering \normalsize $\overset{G*}{\longrightarrow}$
+				\end{minipage}
+				\begin{minipage}{.475\textwidth} \centering \small
+					\begin{tikzpicture}[fill=black, text=white]
+						\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+							|[fill=white!0!black]|0	&|[fill=white!4!black]|11	&|[fill=white!16!black]|43	&|[fill=white!27!black]|69	&|[fill=white!16!black]|43	&|[fill=white!4!black]|11	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!5!black]|15	&|[fill=white!22!black]|58	&|[fill=white!36!black]|93	&|[fill=white!22!black]|58	&|[fill=white!5!black]|15	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!6!black]|16	&|[fill=white!24!black]|62	&|[fill=white!39!black]|100	&|[fill=white!24!black]|62	&|[fill=white!6!black]|16	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!6!black]|16	&|[fill=white!24!black]|62	&|[fill=white!39!black]|100	&|[fill=white!24!black]|62	&|[fill=white!6!black]|16	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!6!black]|16	&|[fill=white!24!black]|62	&|[fill=white!39!black]|100	&|[fill=white!24!black]|62	&|[fill=white!6!black]|16	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!5!black]|15	&|[fill=white!22!black]|58	&|[fill=white!36!black]|93	&|[fill=white!22!black]|58	&|[fill=white!5!black]|15	&|[fill=white!0!black]|0	\\ 
+							|[fill=white!0!black]|0	&|[fill=white!4!black]|11	&|[fill=white!16!black]|43	&|[fill=white!27!black]|69	&|[fill=white!16!black]|43	&|[fill=white!4!black]|11	&|[fill=white!0!black]|0	\\ 
+						};
+					\end{tikzpicture}
+				\end{minipage}
+			\normalsize
+			\caption{Die berechnete Gauß-Filtermaske in Aktion.}
+			\end{figure}
+		\end{center}
 
 
- 		
 
 \chapter{Der SUSAN Kantendetektor}
-	In diesem Kapitel wird der Algorithmus angegeben, danach werden einige Details zur Implementation des Algorithmus in Python 3 erläutert. Im dritten Abschnitt wird bewiesen, dass der SUSAN-Kantendetektor funktioniert und im letzten Teil werden ein paar numerische Experimente durchgeführt.
+	In diesem Kapitel stellen wir den Algorithmus dar, danach erläutern einige Details zur Implementation des Algorithmus in Python 3. Im dritten Abschnitt leiten wir her, warum der SUSAN-Kantendetektor funktioniert und im letzten Teil führen wir ein paar numerische Experimente durch.
 
 	\section{Der Algorithmus}\label{sec:thealgorithm}
 		Der SUSAN Kantendetektor aus [ref] besteht im Grunde aus drei großen Schritten:
 
-		Im ersten Schritt wird eine Maske über jedes Pixel gelegt. Mithilfe dieser Maske berechnet man für jedes Pixel eine Kennzahl $A$, die im weiteren Verlauf dieser Arbeit \glqq Antwort\grqq{} heißt. Die lokalen Maxima von $A$ liegen genau auf den Nullstellen der partiellen Ableitungen in horizontale und vertikale Richtung unseres Eingangsbildes $I$, wie später noch gezeigt wird.
+		Im ersten Schritt wird eine Maske über jedes Pixel gelegt. Mithilfe dieser Maske berechnen wir für jedes Pixel eine Kennzahl $A$, die im weiteren Verlauf dieser Arbeit \glqq Antwort\grqq{} heißt. Die lokalen Maxima von $A$ liegen genau auf den lokalen Extrema der partiellen Ableitungen in horizontaler und vertikaler Richtung unseres Eingangsbildes $I$, wie wir später noch zeigen.
 
-		Der zweite Schritt ist die sogenannte Non-Maximum-Suppression, bei der mithilfe der Richtung der im ersten Schritt berechneten Antwort die Kanten im Eingangsbild $I$ noch genauer lokalisiert werden. Die Lokalisation von Kanten auf Bildern ohne Rauschen ist nach dem zweiten Schritt abgeschlossen.
+		Der zweite Schritt ist die sogenannte Non-Maximum-Suppression, bei der wir mithilfe der Richtung der im ersten Schritt berechneten Antwort die Kanten im Eingangsbild $I$ noch genauer lokalisieren. Die Lokalisation von Kanten auf Bildern ohne Rauschen ist nach dem zweiten Schritt abgeschlossen.
 
-		Da der erste Schritt des SUSAN-Kantendetektors auf einem Schwellenwert $t$ basiert, vernachlässigt er Intensitätsdifferenzen in $I$, die unterhalb von $t$ liegen. Falschpositive und falschnegative Ergebnisse sind auf mit Rauschen behafteten Digitalbildern keine Seltenheit. Aus diesem Grund gibt es noch einen dritten Ausdünnungsschritt, in welchem räumlich isolierte Antworten entfernt werden und Kanten vervollständigt werden. Dieser Schritt wird näher in Kapitel [implementation] behandelt
+		Da der erste Schritt des SUSAN-Kantendetektors auf einem Schwellenwert $t$ basiert, vernachlässigt er Intensitätsdifferenzen in $I$, die unterhalb von $t$ liegen. Falsch positive und falsch negative Ergebnisse sind auf mit Rauschen behafteten Digitalbildern keine Seltenheit. Aus diesem Grund gibt es noch einen dritten Ausdünnungsschritt, in welchem räumlich isolierte Antworten entfernt werden und Kanten vervollständigt werden. Diesen Schritt behandeln wir näher in Kapitel [implementation]
 
 		\subsection{Das SUSAN-Prinzip}\label{ssec:susan_principle}
-			Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild wird eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken	
-			\begin{center}
-				\begin{tikzpicture}[fill=orange]
-					\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-								&			&			&			&			&			&			\\
-								&			&			&			&			&			&			\\
-								&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-								&			&|[fill]|	&|[fill=yellow]|	&|[fill]|	&			&			\\
-								&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-								&			&			&			&			&			&			\\
-								&			&			&			&			&			&			\\
-					};
-				\end{tikzpicture}\qquad
-				\begin{tikzpicture}[fill=orange]
-					\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
-								&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-								&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
-					|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-					|[fill]|	&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-					|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
-								&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
-								&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
-					};
-				\end{tikzpicture}
-			\end{center}
-			wobei das gelbe Pixel der Mittelpunkt der Maske ist, die orangenen Pixel in der Maske und die weißen Pixel außerhalb der Maske liegen. 
+			Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild legen wir eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken der Größe $3\times3$ beziehungsweise $7\times7$, wie in Abbildung [x].
+			\begin{figure}[h]
+				\begin{center}
+					\begin{tikzpicture}[fill=orange]
+						\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+									&			&			&			&			&			&			\\
+									&			&			&			&			&			&			\\
+									&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+									&			&|[fill]|	&|[fill=yellow]|	&|[fill]|	&			&			\\
+									&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+									&			&			&			&			&			&			\\
+									&			&			&			&			&			&			\\
+						};
+					\end{tikzpicture}\qquad
+					\begin{tikzpicture}[fill=orange]
+						\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+									&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+									&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+						|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+						|[fill]|	&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+						|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	\\
+									&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&|[fill]|	&			\\
+									&			&|[fill]|	&|[fill]|	&|[fill]|	&			&			\\
+						};
+					\end{tikzpicture}
+					\caption{Die zwei Filtermasken. Links $3\times3$, rechts $7\times7$.}
+				\end{center}
+			\end{figure}
+			Dabei ist das gelbe Pixel der Mittelpunkt der Maske, die orangenen Pixel liegen in der Maske und die weißen Pixel außerhalb der Maske. 
 			
-			Das SUSAN-Prinzip funktioniert wie folgt:
+			Das SUSAN-Prinzip funktioniert für die Anzahl von orangenen Pixeln $g$ wie folgt:
 			Für jedes Pixel $r_0$ in $I$ (wobei $I(r_0)$ der Grauwert am Pixel $r_0$ ist), berechne die Antwort
 				$$A(r_0) = \text{max}\{0, g - n(r_0)\}.$$
 			Dabei ist $n$ definiert als
@@ -179,12 +216,54 @@
 							0 	& \text{sonst}
 						\end{cases}
 				$$
-			verwendet werden. Als USAN bezeichnen wir genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$, jedes Pixel hat also seine eigene USAN.
+			verwendet werden. Als USAN bezeichnen wir genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$. Jedes Pixel hat also seine eigene USAN.
+			\begin{figure}[ht]
+				\centering
+				\begin{tikzpicture}[fill=black, text=white]
+					\tiny
+					\matrix(m)[matrix of nodes, nodes={draw, minimum size = .6cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+						|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	\\ 
+					};
+					\normalsize
+				\end{tikzpicture}
+				\begin{tikzpicture}[fill=black, text=white]
+					\tiny
+					\matrix(m)[matrix of nodes, nodes={draw, minimum size = .6cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	&|[fill=white!100!black, text=black]|255	&|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	&|[fill=white!78!black, text=black]|201	&|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!15!black]|40	\\ 
+						|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	&|[fill=white!100!black, text=black]|255	&|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	\\ 
+					};
+					\normalsize
+				\end{tikzpicture}
+				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort)}
+			\end{figure}
 
+			Nehmen wir nun zum Beispiel ein Eingangsbild wie in Abbildung [x]. Hier wurde lediglich das SUSAN-Prinzip angewandt und danach wurde jeder Graustufenwert mit dem Faktor $\frac{255}{\text{max}\{A(i,j)\}}$ multipliziert, um den Effekt hervorzuheben. Zunächst einmal finden wir, dass $A(i,j)$ genau da am stärksten ist, wo unser Eingangsbild eine Kante hat. Auch an den Rändern des Bilds findet das SUSAN-Prinzip eine Kante. Es besteht lediglich das Problem, dass um die Kante herum eine kleine Antwort dort ist, wo im originalen Bild nur die Nähe zu einer Kante besteht. Wir schließen daraus, dass die Lokalisation der Kanten zwar durchaus funktioniert, aber verbesserungswürdig ist.
+
+
+		\pagebreak
 		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
-			Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellt man fest, dass die Antwort $A$ ungleich $0$ ist.
+			Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist.
 			Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
-			Zu diesem Zweck wird die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch folgende Fallunterscheidung berechnet:
+			Zu diesem Zweck berechnen wir die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Wir unterscheiden dabei verschiedene Arten von Kanten. Das Prinzip der Fallunterscheidung besticht durch seine Einfachheit: Befinden sich in der USAN mehr Pixel als unsere Maske
 			\begin{enumerate}
 				\item \textbf{Inter-Pixel:}
 
