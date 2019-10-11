@@ -51,6 +51,29 @@ def tikz_string(O):
 	return s
 
 
+def nonum_string(O):
+	height = O.shape[0]
+	width = O.shape[1]
+
+	s = ""
+	for i in range(height):
+		for j in range(width):
+			number = int(np.round(O[i,j], 0))
+			color = int(np.round(number/255*100,2))
+			
+			if j >= 1:
+				s += "&"
+
+			s += "|[fill=white!" + str(color) + "!black"
+			if number >= 160:
+				s += ", text=black"
+
+			s += "]|\\phantom{H}\t"
+		s += "\\\\ \n"
+	return s
+
+
+
 for k in range(2, i-1):
 	print("Opening image " + str(k-1) + " (" + paths[k-2] + ")")	
 	print(paths[k-2])
@@ -66,6 +89,9 @@ for k in range(2, i-1):
 
 	if mode == "tikz":
 		print(tikz_string(img))
+
+	if mode == "nonum":
+		print(nonum_string(img))
 	
 	print("\n\n")
 

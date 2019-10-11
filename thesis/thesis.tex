@@ -18,7 +18,7 @@
 \usepackage{subcaption}
 \usepackage{cleveref}
 \usepackage{tikz}
-\usepackage{textcomp}
+\usepackage{float}
 \usepackage[main=ngerman]{babel}
 \hypersetup{hypertexnames=false}
 
@@ -118,7 +118,7 @@
 		\end{pmatrix}.$$
  		für $\sigma = 1$, $N = 1000$ und $n = 2$. Wenden wir nun unseren Operator $G$ auf folgendes linkes Bild an, so erhalten wir das nachstehende rechte Bild:
 		\begin{center}
-			\begin{figure}[h]
+			\begin{figure}[H]
 				\begin{minipage}{.475\textwidth} \centering \small
 					\begin{tikzpicture}[fill=black, text=white]
 						\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
@@ -169,7 +169,7 @@
 
 		\subsection{Das SUSAN-Prinzip}\label{ssec:susan_principle}
 			Sei $I$ ein Eingangsbild. Um jedes Pixel im Bild legen wir eine Maske gelegt. Für unseren Zweck betrachten wir lediglich die Masken der Größe $3\times3$ beziehungsweise $7\times7$, wie in Abbildung [x].
-			\begin{figure}[h]
+			\begin{figure}[H]
 				\begin{center}
 					\begin{tikzpicture}[fill=orange]
 						\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
@@ -217,7 +217,7 @@
 						\end{cases}
 				$$
 			verwendet werden. Als USAN bezeichnen wir genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$. Jedes Pixel hat also seine eigene USAN.
-			\begin{figure}[ht]
+			\begin{figure}[H]
 				\centering
 				\begin{tikzpicture}[fill=black, text=white]
 					\tiny
@@ -256,18 +256,86 @@
 				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort)}
 			\end{figure}
 
+
 			Nehmen wir nun zum Beispiel ein Eingangsbild wie in Abbildung [x]. Hier wurde lediglich das SUSAN-Prinzip angewandt und danach wurde jeder Graustufenwert mit dem Faktor $\frac{255}{\text{max}\{A(i,j)\}}$ multipliziert, um den Effekt hervorzuheben. Zunächst einmal finden wir, dass $A(i,j)$ genau da am stärksten ist, wo unser Eingangsbild eine Kante hat. Auch an den Rändern des Bilds findet das SUSAN-Prinzip eine Kante. Es besteht lediglich das Problem, dass um die Kante herum eine kleine Antwort dort ist, wo im originalen Bild nur die Nähe zu einer Kante besteht. Wir schließen daraus, dass die Lokalisation der Kanten zwar durchaus funktioniert, aber verbesserungswürdig ist.
 
 
-		\pagebreak
+			\begin{figure}[H]\centering
+				\includegraphics[width=.45\textwidth]{../examples/lena/lena.png}\quad
+				\includegraphics[width=.45\textwidth]{../examples/lena/15_out_raw.png}
+				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort)}
+			\end{figure}
+
+
 		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
-			Das oben genannte Prinzip findet Kanten innerhalb von Bildern mit nur bedürftiger Genauigkeit. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist.
-			Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
-			Zu diesem Zweck berechnen wir die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Wir unterscheiden dabei verschiedene Arten von Kanten. Das Prinzip der Fallunterscheidung besticht durch seine Einfachheit: Befinden sich in der USAN mehr Pixel als unsere Maske
+			Das oben genannte Prinzip findet Kanten innerhalb von Bildern, aber die Lokalisation der Kanten könnte besser sein. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
+			Zu diesem Zweck berechnen wir die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Wir unterscheiden dabei verschiedene Arten von Kanten.
+
+			In der Abbildung [x] wird dargestellt, was die beiden Fälle in der $3 \times 3$ Maske unterscheidet. Der Inter-Pixel-Fall liegt vor, wenn eine Kante zwischen zwei Pixeln liegt. Der Intra-Pixel-Fall liegt vor, wenn ein Pixel genau auf der Kante liegt. In den Abbildungen stehen die orange markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb. Die Mitte ist der Nucleus der Maske.
+			\begin{figure}[H]
+				\begin{center}
+					\begin{minipage}{0.5\textwidth}\centering
+						\begin{tikzpicture}[fill=black, text=white, color=black]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.6cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	\\ 
+								|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black, text=white]|B	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	\\ 
+								|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|A	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}\\ 
+								|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}\\ 
+								|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}			&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	\\ 
+								|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!29!black, text=white]|C		&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	\\ 
+								|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}			&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	\\ 
+								|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!29!black]|\phantom{H}			&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	&|[fill=white!100!black, text=black]|\phantom{H}	\\ 
+							};				
+						\end{tikzpicture}
+
+						Eingangsbild
+					\end{minipage}
+					\begin{minipage}{0.45\textwidth}\centering
+						\begin{tikzpicture}[fill=red]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill]|\phantom{H}& |[fill]|\phantom{H}& |[fill]|\phantom{H}\\
+								|[fill=green]|\phantom{H}& |[fill=green]|A& |[fill=green]|\phantom{H}\\
+								|[fill=green]|\phantom{H}& |[fill=green]|\phantom{H}& |[fill=green]|\phantom{H}\\
+							};
+						\end{tikzpicture}
+						\begin{tikzpicture}[fill=red]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=green]|\phantom{H}& |[fill=green]|\phantom{H}& |[fill=green]|\phantom{H}\\
+								|[fill=green]|\phantom{H}& |[fill=green]|B& |[fill=green]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill]|\phantom{H}& |[fill]|\phantom{H}\\
+							};
+						\end{tikzpicture}
+
+						Inter-Pixel-Fall
+						\vspace{1em}
+
+						\begin{tikzpicture}[fill=red]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill]|\phantom{H}& |[fill=green]|\phantom{H}& |[fill]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill=green]|C& |[fill]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill=green]|\phantom{H}& |[fill]|\phantom{H}\\
+							};
+						\end{tikzpicture}
+
+						Intra-Pixel-Fall
+
+
+					\end{minipage}
+
+					\caption{Inter-Pixel und Intra-Pixel Fall}
+				\end{center}
+			\end{figure}
+
+			Um die Richtung der Kante zu bestimmen, müssen wir zunächst jede Antwort in eine der zwei Fälle einsortieren, danach können wir die Richtung bestimmen:
+
 			\begin{enumerate}
 				\item \textbf{Inter-Pixel:}
 
-				\noindent Falls die Größe der USAN die des Maskendurchmessers übersteigt und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
+				\noindent Falls die Größe der USAN größer ist als der Maskendurchmesser und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
 				$$ D(r_0) = \begin{cases}
 					\text{arctan}\bigg(
 						\frac{x_0 - \text{COG}(x_0)}
@@ -278,7 +346,8 @@
 
 				\end{cases}, $$
 				wobei
-				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)}. $$
+				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)} $$
+				das sogenannte Gravitationszentrum (\emph{center of gravity}) ist.
 				\item \textbf{Intra-Pixel:}
 				
 				\noindent Andernfalls müssen wir die zweiten Momente der USAN folgendermaßen berechnen:
@@ -294,6 +363,10 @@
 					\end{cases}$$
 				Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
 			\end{enumerate}
+
+
+
+
 
 			Die Berechnungen für die jeweiligen Kantenrichtungen an jedem Pixel werden in der Implementation gleichzeitig mit den Berechnungen für das SUSAN-Prinzip durchgeführt. Auf diese Weise müssen $c_t$-Werte an jeder Stelle nur einmal berechnet werden.
 

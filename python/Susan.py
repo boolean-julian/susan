@@ -7,7 +7,7 @@ np.set_printoptions(precision=3)
 
 n_proc = mp.cpu_count()
 
-_mask37_rad = 3.4
+_mask37_rad = 2 + np.sqrt(2)
 _mask37 = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -18,7 +18,7 @@ _mask37 = np.matrix([
 		[0,0,1,1,1,0,0]
 	], dtype='?')
 
-_mask9_rad = 1.4
+_mask9_rad = np.sqrt(2)
 _mask9 = np.matrix([
 	[1,1,1],
 	[1,1,1],
