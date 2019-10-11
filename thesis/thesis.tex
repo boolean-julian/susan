@@ -253,7 +253,7 @@
 					};
 					\normalsize
 				\end{tikzpicture}
-				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort)}
+				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort, $t=1$)}
 			\end{figure}
 
 
@@ -263,7 +263,7 @@
 			\begin{figure}[H]\centering
 				\includegraphics[width=.45\textwidth]{../examples/lena/lena.png}\quad
 				\includegraphics[width=.45\textwidth]{../examples/lena/15_out_raw.png}
-				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort)}
+				\caption{Ein Testdurchlauf mit $t=15$ und der $7\times 7$ Maske}
 			\end{figure}
 
 
@@ -271,7 +271,7 @@
 			Das oben genannte Prinzip findet Kanten innerhalb von Bildern, aber die Lokalisation der Kanten könnte besser sein. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
 			Zu diesem Zweck berechnen wir die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Wir unterscheiden dabei verschiedene Arten von Kanten.
 
-			In der Abbildung [x] wird dargestellt, was die beiden Fälle in der $3 \times 3$ Maske unterscheidet. Der Inter-Pixel-Fall liegt vor, wenn eine Kante zwischen zwei Pixeln liegt. Der Intra-Pixel-Fall liegt vor, wenn ein Pixel genau auf der Kante liegt. In den Abbildungen stehen die orange markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb. Die Mitte ist der Nucleus der Maske.
+			In der Abbildung [x] wird dargestellt, was die beiden Fälle in der $3 \times 3$ Maske unterscheidet. Der Inter-Pixel-Fall liegt vor, wenn eine Kante zwischen zwei Pixeln liegt. Der Intra-Pixel-Fall liegt vor, wenn ein Pixel genau auf der Kante liegt. In den Abbildungen stehen die grün markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb. Die Mitte ist der Nucleus der Maske.
 			\begin{figure}[H]
 				\begin{center}
 					\begin{minipage}{0.5\textwidth}\centering
@@ -326,11 +326,11 @@
 
 					\end{minipage}
 
-					\caption{Inter-Pixel und Intra-Pixel Fall}
+					\caption{Inter-Pixel-Fall und Intra-Pixel-Fall: Die drei abgebildeten rechts abgebildeten USAN wurden durch wählen des Nucleus an den mit A, B und C markierten Stellen im Eingangsbild ausgewertet. Die grün markierten Pixel stehen für Teile der USAN.}
 				\end{center}
 			\end{figure}
 
-			Um die Richtung der Kante zu bestimmen, müssen wir zunächst jede Antwort in eine der zwei Fälle einsortieren, danach können wir die Richtung bestimmen:
+			Wir werden zunächst jede Antwort in eine der zwei Fälle einsortieren, danach können wir die Richtung bestimmen:
 
 			\begin{enumerate}
 				\item \textbf{Inter-Pixel:}
@@ -364,14 +364,51 @@
 				Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
 			\end{enumerate}
 
-
-
-
+			\begin{figure}[H]\centering
+				\includegraphics[width=.4\textwidth]{../examples/tux/tux.png}\quad
+				\includegraphics[width=.4\textwidth]{../examples/tux/15_out_heat.png}\quad
+				\includegraphics[width=.14\textwidth]{assets/heatmap-strip/strip.png}
+				\caption{Ein Testdurchlauf für das Berechnen der Richtungen mit $t=15$. Links ist das Eingangsbild. Rechts ist die Kantenrichtung für jedes Pixel abgebildet. Die Zahlenwerte können an der Skala abgelesen werden und sind als Vielfache von $\pi$ angegeben}
+			\end{figure}
 
 			Die Berechnungen für die jeweiligen Kantenrichtungen an jedem Pixel werden in der Implementation gleichzeitig mit den Berechnungen für das SUSAN-Prinzip durchgeführt. Auf diese Weise müssen $c_t$-Werte an jeder Stelle nur einmal berechnet werden.
 
+			\begin{figure}[H]\centering
+				\begin{tikzpicture}[fill=black, text=white]
+					\tiny
+					\matrix(m)[matrix of nodes, nodes={draw, minimum size = .6cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	&|[fill=white!100!black, text=black]|255	&|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!15!black]|40	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!78!black, text=black]|201	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0&|[fill=white!15!black]|40	\\ 
+						|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	&|[fill=white!100!black, text=black]|255	&|[fill=white!57!black]|147	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!15!black]|40	&|[fill=white!57!black]|147	\\ 
+					};
+					\normalsize
+				\end{tikzpicture}
+				\caption{Eingangsbild wie in Abbildung [x]. Durch die Non-Maximum-Suppression wurde die Kante genau lokalisiert}
+			\end{figure}
+
 			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess implementiert wurde.
 
+			Die Non-Maximum-Suppression unterdrückt in unserem Beispiel tatsächlich alle diejenigen Pixel, die keine lokalen Maxima in der Richtung senkrecht zur Kante sind. Auch für größere Bilder erzielt die Non-Maximum-Suppression den erwünschten Effekt, siehe Abbildung [x].
+
+			\begin{figure}[H]\centering
+				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_heat.png}\quad
+				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_raw.png}\quad
+				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_nonmax_supp.png}
+
+				\caption{Wie Abbildung [x]. Links das Bild mit den Kantenrichtungen (Skala wie in Abbildung [x]). In der Mitte das Bild nach dem prinzipiellen SUSAN-Schritt. Das Bild rechts ist nach der Non-Maximum-Suppression.}
+
+			\end{figure}
+
+
+		\pagebreak
 		\subsection{Ausdünnen}
 			Da viele digitale Bilder eingangs mit Rauschen behaftet sind, ist es manchmal hilfreich, einzelne Antworten zu entfernen und dafür andere hinzuzufügen. Zu diesem Zwecke empfiehlt [ref], dass man einige der Kanten ausdünnt. Dieser Vorgang wird genauer in [ref] beschrieben, wurde aber meinerseits modifiziert.
 			Es wird erneut über das ganze Bild iteriert. Jedes Pixel $(i,j)$ mit einer Antwort $A(i,j) > 0$ wird auf die Anzahl seiner direkten Nachbarn mit $A(x,y) > 0$ überprüft. Als direkte Nachbarschaft werden die acht nächsten Pixel bezeichnet, siehe dazu [grafik]. Angenommen, das Pixel hat...
@@ -386,6 +423,14 @@
 				\item \textbf{3 Nachbarn:}
 					Falls die drei Nachbarn in einer Linie liegen, entferne die Antwort des Pixels.
 			\end{itemize}
+
+			Im Testbild der Abbildung [x] erkennt man die Funktionsweise in allen vier oben genannten Fällen.
+
+			\begin{figure}[H]\centering
+			\includegraphics[width=0.3\textwidth]{./assets/thinout/out_nonmax_supp.png}\quad
+			\includegraphics[width=0.3\textwidth]{./assets/thinout/out_thinned.png}
+			\caption{Links: Kantenbild. Rechts: Kantenbild nach dem Ausdünnen}
+			\end{figure}
 
 
 		\section{Implementation}\label{sec:implementation}
@@ -423,13 +468,13 @@
 					\hline
 					\textbf{Bedingung}					&								& \textbf{Kategorie}			& \textbf{Adjazente $C$} 	&	\\
 					\hline
-														&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$\{(i+1, j-1)$, 			&$(i-1, j+1)\}$\\
+														&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$\{(i+1, j-1)$, 		&$(i-1, j+1)\}$\\
 					\hline
-					$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& vertikal 						&$\{(i-1, j)$, 				&$(i+1, j)\}$\\
+					$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& horizontal 					&$\{(i-1, j)$, 			&$(i+1, j)\}$\\
 					\hline
-					$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$\{(i, j-1)$, 				&$(i, j+1)\}$\\
+					$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$\{(i+1, j+1)$, 		&$(i-1, j-1)\}$\\
 					\hline
-					$D(i,j) > -\frac{3}{8}\pi$			&								& horizontal					&$\{(i+1, j-1)$, 			&$(i-1, j+1)\}$\\
+					$D(i,j) > -\frac{3}{8}\pi$			&								& vertikal						&$\{(i, j-1)$, 			&$(i, j+1)\}$\\
 					\hline
 					\end{tabular}
 				\end{center}
