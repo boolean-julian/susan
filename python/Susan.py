@@ -7,7 +7,7 @@ np.set_printoptions(precision=3)
 
 n_proc = mp.cpu_count()
 
-_mask37_rad = 2 + np.sqrt(2)
+_mask37_rad = 3.4
 _mask37 = np.matrix([
 		[0,0,1,1,1,0,0],
 		[0,1,1,1,1,1,0],
@@ -18,7 +18,7 @@ _mask37 = np.matrix([
 		[0,0,1,1,1,0,0]
 	], dtype='?')
 
-_mask9_rad = np.sqrt(2)
+_mask9_rad = 1.4
 _mask9 = np.matrix([
 	[1,1,1],
 	[1,1,1],
@@ -58,7 +58,7 @@ class Susan:
 		self.mask = mask
 		self.center = (self.mask.shape[0]//2, self.mask.shape[1]//2)
 
-		self.nbd_size = mask.sum()
+		self.nbd_size = mask.sum()-1
 		if self.nbd_size <= 1:
 			print("Error: Mask should have more than one item (has %d)" % self.nbd_size)
 			sys.exit(0)
@@ -348,6 +348,13 @@ class Susan:
 							self.response[i*self.width+j] = 0 
 
 
+	_fivebyfive_neighbors = np.array([
+								[-2,-1],[-2, 0],[-2, 1],
+						[-2,-1],[-1,-1],[-1, 0],[-1, 1],[-1, 2],
+						[-2, 0],[ 0,-1],		[ 0, 1],[ 0, 2],
+						[-2, 1],[ 1,-1],[ 1, 0],[ 1, 1],[ 1, 2],
+								[ 2,-1],[ 2, 0],[ 2, 1],
+	])
 	def _detect_corners(self, start, end, delta_g):
 		# get corners from edge detection response
 		for i in range(start, end):
@@ -375,16 +382,16 @@ class Susan:
 					self.corners[i*self.width+j] = max(0, self.response[i*self.width+j] - delta_g)
 
 
-		# suppress everything that is not a local maximum
+		# suppress everything that is not a local maximum in a 5x5 area
 		for i in range(start, end):
-			if i >= 1 and i < self.height:
+			if i >= 1 and i < self.height-1:
 				for j in range(self.width):
 					if self.corners[i*self.width+j] > 0:
-						for r in self._direct_neighbors:
+						for r in self._fivebyfive_neighbors:
 							x = i+r[0]
 							y = j+r[1]
 
-							if x >= 0 and x < self.height and y >= 0 and y < self.width:
+							if x >= 2 and x < self.height-2 and y >= 2 and y < self.width-2:
 								if self.corners[i*self.width+j]	<= self.corners[x*self.width+y]:
 									self.corners[i*self.width+j] = 0
 									break
