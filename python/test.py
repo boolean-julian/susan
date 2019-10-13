@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
 	
 	t = 15
-	path = "../examples/lena/"
-	S = Susan(path + "lena.png", mask ="mask37")
+	path = "../examples/tux/"
+	S = Susan(path + "tux.png", mask ="mask37")
 	S.detect_edges_mp(t, filename = path + "15_out", nms=True, thin=True, heatmap=True, geometric=True, corners = True)
 	

@@ -2,7 +2,11 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-img = cv2.imread("../examples/lena/lena.png")
+#path = "../examples/lena/lena.png"
+#path = "../thesis/assets/principle-test/01.png"
+path = "../examples/original/original.png"
+
+img = cv2.imread(path)
 edges = cv2.Canny(img,100,200)
 
-plt.imsave("canny-out.png", edges, cmap="gray")
+plt.imsave(path + "-canny.png", edges, cmap="gray")

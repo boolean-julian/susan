@@ -129,8 +129,7 @@ class Susan:
 
 		for i in range(start, end):
 			for j in range(self.width):
-				usan_area	= 0			# number of pixels elements in usan
-				usan_value 	= 0			# sum over all comparisons in usan
+				usan_area 	= 0			# sum over all comparisons in usan
 
 				i_cog 		= 0			# center of gravity (vertical position)
 				j_cog 		= 0			# center of gravity (horizontal position)
@@ -147,7 +146,7 @@ class Susan:
 					if x >= 0 and x < self.height and y >= 0 and y < self.width:
 						curr = self.compare(self.img, (i,j), (x,y), t)
 						if curr != 0:
-							usan_value = usan_value + curr
+							usan_area = usan_area + curr
 
 							i_cog += x * curr
 							j_cog += y * curr
@@ -156,22 +155,20 @@ class Susan:
 							j2_intra += (r[1]**2) * curr
 							ij_intra += r[0] * r[1] * curr
 
-						else:
-							usan_area += 1
 
-				i_cog = i_cog / usan_value
-				j_cog = j_cog / usan_value
+				i_cog = i_cog / usan_area
+				j_cog = j_cog / usan_area
 
 				self.i_cogs[i*self.width+j] = i_cog
 				self.j_cogs[i*self.width+j] = j_cog
 
 				# get direction for non max suppression
 				direction = 2	# 'no edge' marker
-				if geometric - usan_value > 0:
+				if geometric - usan_area > 0:
 					self.dist_from_cog[i*self.width+j] = np.sqrt((i_cog - i)**2 + (j_cog - j)**2)
 					
 					# inter pixel case
-					if usan_area > diam and self.dist_from_cog[i*self.width+j] > 1:
+					if usan_area > diam and self.dist_from_cog[i*self.width+j] >= 1:
 						if j_cog != j:
 							direction = np.arctan((i-i_cog)/(j-j_cog))
 					
@@ -186,13 +183,13 @@ class Susan:
 							direction = np.arctan(phi)
 						else:
 							direction = -1 * np.sign(ij_intra) * np.arctan(phi)
-
+							
 					else:
 						direction = np.pi/2
 
 				index = i*self.width+j
 				self.direction[index]	= direction
-				self.response[index] 	= max(0, geometric - usan_value)
+				self.response[index] 	= max(0, geometric - usan_area)
 
 	# classification of direction and non max suppression
 	# keep in mind that the directional values for each pixel are stored in self.direction
