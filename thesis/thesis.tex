@@ -20,6 +20,7 @@
 \usepackage{tikz}
 \usepackage{float}
 \usepackage{listings}
+\usepackage{extarrows}
 \usepackage[main=ngerman]{babel}
 \hypersetup{hypertexnames=false}
 
@@ -134,7 +135,7 @@
 					\end{tikzpicture}
 				\end{minipage}
 				\begin{minipage}{.05\textwidth}
-					\centering \normalsize $\overset{G*}{\longrightarrow}$
+					\centering \normalsize $\xlongrightarrow{G*}$
 				\end{minipage}
 				\begin{minipage}{.475\textwidth} \centering \small
 					\begin{tikzpicture}[fill=black, text=white]
@@ -492,7 +493,15 @@
 				\label{fig:thinout_test}
 			\end{figure}
 
+			Laut der zitierten Quelle \cite{thinout} soll eigentlich auch für die Fälle mit mehr als 3 Nachbarn gesorgt werden. Allerdings ist eine Vorhersage über Nachbarschaften mit 4 oder mehr Nachbarn relativ schwierig. In Abbildung \ref{fig:thinout-neighbors} sind ein paar Beispielhafte Fälle abgebildet.
 
+			\begin{figure}
+				%dddd
+				\caption{test}
+				\label{fig:thinout-neighbors}
+			\end{figure}
+
+		
 		\subsection{Der SUSAN-Eckendetektor}\label{ssec:corner_detector}
 			In \cite{SUSAN} wird zusätzlich ein Verfahren beschrieben, mit welchem sich durch das SUSAN-Prinzip Ecken finden lassen. Dieser Eckendetektor basiert darauf, dass der SUSAN Kantendetektor an Ecken stärkere Antworten liefert als an Kanten. Man verwendet also im ersten Schritt des Eckendetektors lediglich einen niederigeren Wert für $g$ in \ref{sec:thealgorithm}.
 			Danach finden sich immer noch viele falsch positive Antworten. Um diese zu vermeiden, überprüft man, ob die jeweiligen Kandidaten mit einer Kante zusammenhängen. Dies gelingt durch das Erzwingen folgender Regeln für jede Ecke:
@@ -678,8 +687,20 @@
 
 		\section{Heuristik}
 			\subsection{Erklärung des SUSAN-Prinzips}
-				Für diese Heuristik nehmen wir an, dass das Bild eingangs eine stetige Funktion $I: \mathbb{R}\to \mathbb{R}$ ist.
-				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$ eine untere Grenze $x_0+a(x_0)$ und eine obere Grenze $x-b(x_0)$ der USAN.
+			 	Durch die folgende Heuristik aus \cite{SUSAN} soll dargestellt werden, wie das Prinzip des SUSAN-Kantendetektors funktioniert. Die Heuristik ist nicht als Beweis zu verstehen, da für diese Heuristik Annahmen getroffen werden, die nicht auf Digitalbilder zutreffen.
+
+			 	Angenommen wir haben ein eindimensionales Bild. Unser Ziel ist es, genau die Stellen zu markieren, die den größten Grauwertunterschied zu ihrer Nachbarschaft haben. Das klassische Werkzeug der Analysis, um genau diese Stellen zu identifizieren, ist die Ableitung. Leiten wir eine zweimal differenzierbare, stetige Funktion $I$ zweimal ab, so erhalten wir eine Funktion $I''$, dessen Nullstellen die Stellen des größten Unterschieds in $I$ repräsentieren.
+
+			 	So eine Ableitung existiert allerdings nicht für Digitalbilder. Darum nehmen wir zunächst an, dass unser Bild eine solche Funktion $I: [0, B-1]_\mathbb{R} \to [0,255]_\mathbb{R}$ ist. Implizit wird im Folgenden die Annahme getroffen, dass $I$ eine bijektive Funktion ist. Das ist im Allgemeinen zwar nicht der Fall, allerdings liegt uns bei der digitalen Verarbeitung von Bildern im Gegensatz zur eindimensionalen Analysis immer beides vor: Die Position und die Intensität eines Pixels lassen sich hier durch geschicktes Speichern aufeinander zurückführen.
+
+			 	\begin{figure}[H]
+			 		\centering
+			 		\includegraphics[width=.7\textwidth]{assets/susan-graph.png}
+			 		\caption{Das Bild $I$ (Bild entnommen aus \cite{SUSAN}). Das Kreuz steht für den Nucleus der USAN und die Kästen für die Maske.}
+			 		\label{fig:susan-graph}
+			 	\end{figure}
+
+				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$ eine untere Grenze $x_0+a(x_0)$ und eine obere Grenze $x_0-b(x_0)$ der USAN.
 				Dann gilt an den Grenzen:
 				\begin{align*}
 					I(x_0 + a(x_0)) &= I(x_0) + t \\
@@ -692,7 +713,7 @@
 					a(x_0) = x_0 - x(I(x_0) + t) \\
 					b(x_0) = x(I(x_0) - t) - x_0,
 				\end{align*}
-				wobei $x$ die Position ist.
+				wobei $x$ die Umkehrfunktion von $I$ ist.
 				Damit ist $n(x_0) = x(I(x_0) + t) - x(I(x_0) - t)$ und daraus folgt
 				$$ n'(x_0) = x'(I(x_0) + t) \cdot I'(x_0) - x'(I(x_0) - t) \cdot I'(x_0) = 0,$$
 				anders formuliert,
@@ -704,29 +725,100 @@
 	 			Lassen wir $t$ gegen Null laufen, so finden wir
 	 			$$\lim_{t\to 0}\; (I(x_0) + t)' - (I(x_0) - t)' = I''(x_0) = 0. $$
 
-	 			Demnach treffen sich die maximale Antwort des SUSAN-Kantendetektors und die zweite Ableitung der Bildfunktion. Es sei dazu gesagt, dass jegliche Ableitungen nur zum Zwecke der Demonstration dienen. Im tatsächlichen SUSAN-Kantendetektor wird keine Ableitung auf dem diskreten Bild berechnet.
+	 			Demnach treffen sich die maximale Antwort des SUSAN-Kantendetektors und die zweite Ableitung der Bildfunktion. Tatsächlich verwendet der SUSAN-Kantendetektor allerdings keine Ableitungen. Der SUSAN-Algorithmus bestimmt lediglich die Anzahl der ähnlichen Pixel in einer Umgebung.
 
-	 		\subsection{Berechnung der Richtungen}
-	 			Die Berechnungen für die Kantenrichtungen funktionieren folgendermaßen. Im Intra-Pixel Fall schaut man sich die Umgebung des Pixels $r_0$ an und bestimmt daraus $\text{COG}(r_0)$. Im Falle einer $3\times 3$ Maske ist durch die Bedingung Intra-Pixel Bedingung gegeben, dass $n(r_0) \leq 2\cdot1.4=2.8$. 
+				\begin{figure}[H]
+					\begin{center}
+						\begin{tikzpicture}[fill=orange]
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+										&|[fill]|	&|[fill]|	&|[fill=yellow]|	&|[fill]|	&|[fill]|	&	\\
+							};
+						\end{tikzpicture}
+						\caption{Filtermaske im 1D-Bild. Der Nucleus ist gelb markiert. Die orangenen Pixel liegen innerhalb der Maske. Die weißen Pixel liegen außerhalb der Maske.}
+						\label{fig:def_maske_1d}
+					\end{center}
+				\end{figure}
+
+	 			In einem eindimensionalen Digitalbild $P: [0,B-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}$ identifizeren wir durch eine Maske wie zum Beispiel in Abbildung \ref{fig:def_maske_1d} die USAN der einzelnen Pixel, wie auch schon im Algorithmus in \ref{sec:thealgorithm}. Dabei stellen wir für jede USAN fest, wie viele Pixel $r$ ähnlich zu dem Nucleus $r_0$ in der Mitte der Maske sind. Wir erinnern uns an die Definitionen aus dem Algorithmus
+				$$
+				A(r_0) = \text{max}\{0, g - n(r_0)\},\;
+				n(r_0) = \sum_r c_t(r, r_0),\;
+				c_t(r, r_0) \approx
+					\begin{cases}
+						1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
+						0 	& \text{sonst}
+					\end{cases}.
+				$$
+
+				Anhand eines Beispielbildes wird nun vorgeführt, wie der SUSAN-Kantendetektor eine Kante identifiziert.
+				\begin{figure}[H]
+					\begin{center}
+						$\cdots$
+						\begin{tikzpicture}[fill=black, text=white]
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[text=black, fill=white]|\phantom{H}	&|[text=black, fill=white]|\phantom{H}	&|[text=black, fill=white]|A	&|[text=black, fill=white]|B	&|[text=black, fill=white]|C	&|[fill]|D	&|[fill]|E	&|[fill]|F	 &|[fill]|\phantom{H} 	&|[fill]|\phantom{H} \\
+							};
+						\end{tikzpicture}
+						$\cdots$
+						\caption{Die weißen Pixel haben den Grauwert $255$, die schwarzen Pixel den Grauwert $0$}
+						\label{fig:1d-heur}
+					\end{center}
+				\end{figure}
+				Wir stellen fest, dass die mit A-F markierten Pixel verschiedene Anzahlen an ähnlichen Nachbarn in ihrer Maske haben.
+				\begin{align*}
+					n(A) = 4\quad n(B) = 3\quad n(C) = 2\\
+					n(D) = 2\quad n(E) = 3\quad n(F) = 4\\
+				\end{align*}
+				Entsprechend finden wir eine Antwort mit $g = 4$ wie in Abbildung \ref{fig:1d-ans}.
+				\begin{figure}[H]
+					\begin{center}
+						$\cdots$
+						\begin{tikzpicture}[fill=black, text=white]
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								&|[fill]|0	&|[fill]|1	&|[fill]|2	&|[fill]|2 &|[fill]|1 &|[fill]|0\\
+							};
+						\end{tikzpicture}
+						$\cdots$
+						$$\downarrow \cdot \frac{255}{\text{max}\{A(r)\}} \downarrow$$
+						$\cdots$
+						\begin{tikzpicture}[fill=black, text=white]
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=white!0!black]|0	&|[fill=white!50!black]|128	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!50!black]|128	&|[fill=white!0!black]|0	\\
+							};
+						\end{tikzpicture}
+						$\cdots$
+						$$\downarrow \text{Non-Max-Supp.} \downarrow$$
+						$\cdots$
+						\begin{tikzpicture}[fill=black, text=white]
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = .9cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!100!black, text=black]|255	&|[fill=white!100!black, text=black]|255	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+							};
+						\end{tikzpicture}
+						$\cdots$
+						\caption{Antwort}
+						\label{fig:1d-ans}
+					\end{center}
+				\end{figure}
+				Durch das SUSAN-Prinzip und die Non-Maximum-Suppression konnten wir die Kante ohne Ableitung bestimmen.
 
 \begin{thebibliography}{56}
 
 \bibitem{SUSAN}
-	Stephen M. Smith, J. Michael Brady,
-	\textit{SUSAN - A New Approach to Low Level Image Processing},
-	International Journal of Computer Vision 23(1), 45-78,
+	Stephen M. Smith, J. Michael Brady,\\
+	\textit{SUSAN - A New Approach to Low Level Image Processing},\\
+	International Journal of Computer Vision 23(1), 45-78,\\
 	1997
 
 \bibitem{thinout}
-	Stephen M. Smith
-	\textit{Edge Thinning Used in the SUSAN Edge Detector}
-	Technical Report TR95SMS5
+	Stephen M. Smith,\\
+	\textit{Edge Thinning Used in the SUSAN Edge Detector},\\
+	Technical Report TR95SMS5,\\
 	1995
 
 \bibitem{gaussianblur}
-	Robert Fisher, Simon Perkins, Ashley Walker, Erik Wolfart,
-	\textit{Gaussian Smoothing},
-	The Hypermedia Image Processing Reference 2,
+	Robert Fisher, Simon Perkins, Ashley Walker, Erik Wolfart,\\
+	\textit{Gaussian Smoothing},\\
+	The Hypermedia Image Processing Reference 2,\\
 	2004
 	
 \bibitem{pillow}
@@ -734,7 +826,7 @@
 	\texttt{https://python-pillow.org/}
 
 \bibitem{numpy}
-	NumPy, \\
+	NumPy,\\
 	\texttt{https://numpy.org/}
 
 \bibitem{multiprocessing}
@@ -742,12 +834,18 @@
 	\texttt{https://docs.python.org/3/library/multiprocessing.html}
 
 \bibitem{pyslow}
-	Why Python is Slow: Looking Under the Hood
-	\texttt{https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/}
+	Jake VanderPlas,\\
+	\textit{Why Python is Slow: Looking Under the Hood},\\
+	\texttt{https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/},\\
+	2014
 
 \bibitem{pyparallel}
-	Vectorization and parallelization in Python with NumPy and Pandas
-	\texttt{https://datascience.blog.wzb.eu/2018/02/02/vectorization-and-parallelization-in-python-with-numpy-and-pandas/}
+	Markus Konrad,\\
+	\textit{Vectorization and parallelization in Python with NumPy and Pandas},\\
+	\texttt{https://datascience.blog.wzb.eu/2018/02/02/\\
+	vectorization-and-parallelization-in-python-with-numpy-and-pandas/},\\
+	2018
+
 \end{thebibliography}
 			
 

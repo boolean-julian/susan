@@ -72,6 +72,8 @@ def nonum_string(O):
 		s += "\\\\ \n"
 	return s
 
+T = np.array([[0,1,2,2,1,0],[0,0,2,2,0,0]], dtype="i")*255*0.5
+print(tikz_string(T))
 
 
 for k in range(2, i-1):
