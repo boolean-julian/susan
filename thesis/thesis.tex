@@ -90,26 +90,34 @@
 	Kantendetektoren sind ein wichtiges Werkzeug der Bildverarbeitung...
 
 \chapter{Mathematische Grundlagen}
-	\section{Analytische Grundlagen}
-
-	\section{Varianzanalyse}
 	\section{Bildverarbeitung}\label{sec:imageproc}
 		In der digitalen Bildverarbeitung für Graustufenbilder betrachten wir Abbildungen der Form
 		$$ I: [0, B-1]_\mathbb{Z} \times [0, H-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}. $$
 		Solche Abbildungen werden im weiteren Verlauf dieser Arbeit schlichtweg als Bilder bezeichnet. $H$ steht für die Höhe und $B$ für die Breite des Bildes. Ferner steht $0$ für schwarz und $255$ für weiß.
 		
-		Eines der wichtigen Instrumente der Bildverarbeitung ist die Faltung. Da die Faltung allerdings nur für Funktionen definiert wird und die Abbildung $I$ keine Funktion ist, müssen wir die Faltung für den diskreten Fall neu definieren. Diese Definition trägt den Namen Filtermaske.
-		Eine Filtermaske ist eine Matrix $k \in \mathbb{R}^{n \times m}$, die folgendermaßen Anwendung findet:
-		$$ O(x,y) = \sum_{i=0}^{n-1} \sum_{j=0}^{m-1} k(i,j) \cdot I(x-i+a, y-j+b),$$
-		wobei $(a,b)$ der Nucleus der Filtermaske ist, $I$ das Eingangsbild und $O$ das neu gewonnene Ausgangsbild.
-		Wir schreiben, wie bei der Faltung,
-		$$ O = k * I $$
+		Eines der wichtigen Instrumente der Bildverarbeitung ist die Faltung. Die Faltung ist für Funktionen $f,g : \mathbb{R}^k \to \mathbb{R}$ definiert als
+		$$ (f * g)(x) = \int_{\mathbb{R}^k} f(s) ds.$$
+		Für $k = 2$ und $(x,y) \in \mathbb{R}^2$ bedeutet diese Definition insbesondere
+		$$ (f*g)(x, y) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} f(s, t) \; g(x - s, y - t) \; ds \; dt$$
 
-		Ein Beispiel für eine solche Filtermaske bietet der sogenannte Gaußsche Weichzeichner, der in \cite{gaussianblur} näher beschrieben wird. Im stetigen Fall würde man ihn anwenden, indem man eine Funktion mit der Funktion der Normalverteilung in zwei Dimensionen faltet. Die Funktion der Normalverteilung lautet
-		$$ g(x,y) := \frac{1}{\sigma \sqrt{2\pi}} e ^{-\frac{x^2 + y^2}{2\sigma^2}}. $$
-		Im Fall von digitalen Bildern kennen wir nur diskrete Bildpunkte, also muss eine Approximation genügen. Man wähle eine Größe $n = m$ der Filtermaske und summiere für $x,y \in [-n, n]_\mathbb{Z}$ jeweils
-		$$G(x,y) = \frac{1}{N}\sum_{i=\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor}\, \sum_{j=\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor} g(x+\frac{i}{N},y+\frac{j}{N})$$ 
-		für ein passendes $\sigma$ und ein großes $N$. Die Größe der Filtermaske bestimmt sich in diesem Fall über das gewählte $\sigma$. Eine Faustregel dafür lautet, dass falls $\sqrt{\hat x^2 + \hat y^2} \geq 3\sigma$ gilt, auch $g(\hat x,\hat y) \approx 0$ gilt. Ausgehend davon können wir $n = \lfloor3\sigma\rfloor-1$ wählen und erhalten somit die Filtermaske
+		Digitale Bilder liegen zwar in der Praxis zweidimensional vor, allerdings nur diskret; passend zur Definition von $I$. Wir benötigen den Begriff der Faltung nun also für den diskreten Fall und mit endlichen Grenzen. Diese Definition trägt den Namen \emph{Filtermaske}.
+		Eine Filtermaske ist eine Matrix $K \in \mathbb{R}^{n \times m}$, die folgendermaßen Anwendung findet:
+		
+		$$ O(x,y) = \sum_{i=0}^{n-1} \sum_{j=0}^{m-1} K(i,j) \cdot I(x-i+a, y-j+b),$$
+		
+		für $(x,y) \in [0, B-1]_\mathbb{Z} \times [0, H-1]_\mathbb{Z}$, wobei $(a,b)$ der Nucleus der Filtermaske ist, $I$ das Eingangsbild und $O$ das neu gewonnene Ausgangsbild. Außerhalb des Definitionsbereichs von $I$ sei für diese Definition $I \equiv 0$.
+		Wir schreiben, wie bei der Faltung
+		$$ O = K * I.$$
+
+		Ein Beispiel für eine solche Filtermaske bietet der sogenannte Gaußsche Weichzeichner, der in \cite{gaussianblur} näher beschrieben wird. Im stetigen Fall würde man ihn anwenden, indem man eine Funktion mit der Funktion der Normalverteilung in zwei Dimensionen faltet. Die Funktion der Normalverteilung lautet für einen Parameter $\sigma > 0$:
+		$$ g(x,y) := \frac{1}{2 \pi \sigma} \;e ^{-\frac{x^2 + y^2}{2\sigma^2}}. $$
+		Bevor wir mit einem diskreten Bild falten können, müssen wir eine endlich große, diskrete Filtermaske aus der Definition von $g$ gewinnen. Dies gelingt dadurch, dass wir die Funktion um jedes Pixel integrieren:
+		$$\hat G(x,y) = \int_{y-\frac{1}{2}}^{y+\frac{1}{2}} \int_{x-\frac{1}{2}}^{x+\frac{1}{2}} g(s,t) \; ds dt$$
+		Für eine (große) Anzahl an Stichproben $N$ können wir diese Integration durch Rechtecke approximieren.
+		Man wähle eine Größe $n = m$ der Filtermaske und summiere für $x,y \in [-n, n]_\mathbb{Z}$ jeweils
+		$$G(x,y) = \frac{1}{N}\sum_{i=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor}\, \sum_{j=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor} g(x+\frac{i}{N},y+\frac{j}{N})$$
+		für ein passendes $\sigma$ und ein großes $N$.
+		Die Größe der Filtermaske bestimmt sich in diesem Fall über das gewählte $\sigma$. Eine Faustregel dafür lautet, dass falls $\sqrt{\hat x^2 + \hat y^2} \geq 3\sigma$ gilt, auch $g(\hat x,\hat y) \approx 0$ gilt. Ausgehend davon können wir $n = \lfloor3\sigma\rfloor-1$ wählen und erhalten somit die Filtermaske
 		$$G = \frac{1}{273}
 		\begin{pmatrix}
 			1&4&7&4&1\\
@@ -117,7 +125,7 @@
 			7&26&41&26&7\\
 			4&16&26&16&4\\
 			1&4&7&4&1
-		\end{pmatrix}.$$
+		\end{pmatrix}$$
  		für $\sigma = 1$, $N = 1000$ und $n = 2$. Wenden wir nun unseren Operator $G$ auf folgendes linkes Bild an, so erhalten wir das nachstehende rechte Bild:
 		\begin{center}
 			\begin{figure}[H]
@@ -152,13 +160,23 @@
 				\end{minipage}
 			\normalsize
 			\caption{Die berechnete Gauß-Filtermaske in Aktion.}
+			\label{fig:gaussian-example}
 			\end{figure}
 		\end{center}
+
+		Dadurch, dass wir das Eingangsbild $I$ außerhalb des Randes 0 setzen, erhalten wir keinerlei Artefakte am Rand. Als Rechenbeispiel benutzen wir jetzt das mittlere Pixel $(x,y) = (3,3)$ aus Abbildung \ref{fig:gaussian-example}.
+
+		\begin{align*}
+			O(3,3) 	&= \sum_{i=0}^{4} \sum_{j=0}^{4} G(i,j) \cdot I(3-i+2, 3-j+2) 											\\
+					&= \sum_{i=0}^{4} \sum_{j=0}^{4} G(i,j) \cdot I(5-i, 5-j) 												\\
+					&= \frac{1}{273} \left( 255 \cdot 7 + 255 \cdot 26 + 255 \cdot 41 + 255 \cdot 26 + 255 \cdot 7 \right) 	\\
+					&= \frac{255}{273} \left(7 + 26 + 41 + 26 + 7 \right) = 99.94 \approx 100
+		\end{align*}
 
 
 
 \chapter{Der SUSAN Kantendetektor}
-	In diesem Kapitel stellen wir den Algorithmus vor, danach erläutern wir einige Details zur Implementation des Algorithmus in Python 3. Im dritten Abschnitt leiten wir her, warum der SUSAN-Kantendetektor funktioniert und im letzten Teil führen wir ein paar numerische Experimente durch.
+	In diesem Kapitel stellen wir den Kantendetektions-Algorithmus nach dem SUSAN Prinzip aus \cite{SUSAN} vor, danach erläutern wir einige Details zur Implementation des Algorithmus in Python 3. Im dritten Abschnitt leiten wir her, warum der SUSAN-Kantendetektor funktioniert und im letzten Teil führen wir ein paar numerische Experimente durch.
 
 	\section{Der Algorithmus}\label{sec:thealgorithm}
 		Der SUSAN Kantendetektor aus \cite{SUSAN} besteht aus drei Großschritten:
@@ -202,29 +220,24 @@
 				\end{center}
 			\end{figure}
 			
-			Die Masken sind Umgebungen eines Pixels, die einen Kreis approximieren. Die $3 \times 3$ Maske approximiert einen Kreis mit einem Radius von $1.4$, die $7 \times 7$ Maske hingegen approximiert einen kreis mit einem Radius von $3.4$.
+			Die Maskenträger sind Umgebungen eines Pixels, die einen Kreis approximieren. Der $3 \times 3$ Maskenträger approximiert einen Kreis mit einem Radius von $1.4$, der $7 \times 7$ Maskenträger hingegen approximiert einen kreis mit einem Radius von $3.4$.
 
-			Prinzipiell finden wir beim ersten Schritt des SUSAN-Verfahrens die Anzahl der zum Nucleus, also dem Mittelpunkt der Maske, ähnlicher Pixel $n(r)$ für jeden Nucleus $r$. Mit \glqq ähnlich\grqq{} ist in diesem Sinne gemeint, dass die absolute Intensitätsdifferenz $|I(a)-I(b)|$ zwischen den beiden Pixeln $a$ und $b$ unter einer im Vorfeld festgelegten Grenze $t$ liegt. Die ähnlichen Pixel bezeichnen wir ferner als USAN (\emph{univalue segment assimilating nucleus}). Die maximale Größe einer USAN ist für die $7 \times 7$ Maske $36$ und für die $3 \times 3$ Maske $8$. Üblicherweise wählen wir $g$ als $\frac{3}{4}$ der Maskengröße, in den ersten Beispielen werden wir allerdings $g$ gleich der Maskengröße wählen.
+			Prinzipiell finden wir beim ersten Schritt des SUSAN-Verfahrens die Anzahl $n(r)$ der zum Nucleus $r$, also dem Mittelpunkt der Maske, ähnlichen Pixel für jeden Nucleus $r$. Mit \glqq ähnlich\grqq{} ist in diesem Sinne gemeint, dass die absolute Intensitätsdifferenz $|I(a)-I(r)|$ zwischen den beiden Pixeln $a$ und $r$ unter einer im Vorfeld festgelegten Grenze $t$ liegt, wobei $a$ ein Pixel aus dem Maskenträger ist. Die ähnlichen Pixel bezeichnen wir ferner als USAN (\emph{univalue segment assimilating nucleus}). Die maximale Größe einer USAN ist für die $7 \times 7$ Maske $36$ und für die $3 \times 3$ Maske $8$. $g$ ist die maximale Größe einer USAN. Um $A(r)$ zu erhalten, subtrahieren wir die Anzahl $n(r)$ der ähnlichen Pixel von $g$.
 
 			Konkret führen wir folgende Rechnung durch.
 			Für jedes Pixel $r_0$ in $I$, wobei $I(r_0)$ der Grauwert am Pixel $r_0$ ist, berechnen wir die Antwort
 				$$A(r_0) = \text{max}\{0, g - n(r_0)\}.$$
 			Dabei ist $n$ definiert als
 				$$n(r_0) = \sum_r c_t(r, r_0),$$
-			wobei wir über alle Pixel $r$ in der Maske summieren und	
+			wobei wir über alle Pixel $r$ in der Maske und $r_0$ selbst summieren und	
 				$$
 					c_t(r, r_0) =
-						\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg)
-				$$
-			eine Vergleichsfunktion für zwei Pixel ist. Statt der obigen Vergleichsfunktion kann auch die Näherung
-				$$
-					c_t(r, r_0) \approx
 						\begin{cases}
 							1 	& \text{falls } |I(r) - I(r_0)| \leq t 	\\
 							0 	& \text{sonst}
 						\end{cases}
 				$$
-			verwendet werden. In einer USAN liegen genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$. Wir verbleiben mit der Antwort $A$, auf welchem wir schon sehr gut den Effekt der Kantendetektion beobachten können.
+			eine Vergleichsfunktion für zwei Pixel ist. In einer USAN liegen genau diejenigen Pixel $r$ aus der Maske, für die $c_t(r, r_0) > 0$. Wir verbleiben mit der Antwort $A$, auf welchem wir schon sehr gut den Effekt der Kantendetektion beobachten können.
 
 			\begin{figure}[H]
 				\centering
@@ -262,11 +275,28 @@
 					};
 					\normalsize
 				\end{tikzpicture}
-				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort, $t=1$)}
+				\caption{Das SUSAN Prinzip (links Eingang, rechts Antwort, $t=1$, $3\times3$ Maske)}
 				\label{fig:susan_principle}
 			\end{figure}
 
-			Nehmen wir nun zum Beispiel ein Eingangsbild wie in Abbildung \ref{fig:susan_principle}. Hier wurde lediglich das SUSAN-Prinzip angewandt und danach wurde jeder Graustufenwert mit dem Faktor $\frac{255}{\text{max}\{A(i,j)\}}$ multipliziert, um den Effekt hervorzuheben. Zunächst einmal finden wir, dass $A(i,j)$ genau da am größten ist, wo unser Eingangsbild eine Kante hat. Auch an den Rändern des Bilds findet das SUSAN-Prinzip eine Kante. Es besteht lediglich das Problem, dass um die Kante herum eine kleine Antwort dort ist, wo im originalen Bild nur die Nähe zu einer Kante besteht. Wir schließen daraus, dass die Lokalisation der Kanten zwar durchaus funktioniert, aber verbesserungswürdig ist.
+			Nehmen wir nun zum Beispiel ein Eingangsbild wie in Abbildung \ref{fig:susan_principle}. Hier wurde der oben genannte Algorithmus angewandt.
+			Sehen wir uns das mittlere Pixel $r_0$ des Eingangsbilds an und wenden den Algorithmus mit $t=1$ an:
+			\begin{align*}
+				n(r_0) 	=&\sum_r c(r,r_0) \\
+						=&\; 0 + 1 + 0 \\
+						+&\; 0 + 1 + 0 \\
+						+&\; 0 + 1 + 0 = 3
+			\end{align*}
+			$$ A(r_0) = g - n(r_0) = 8 - 3 = 5 $$
+			Um den Effekt hervorzuheben, wird jeder Graustufenwert mit der maximalen Antwort normiert und dann mit 255, dem Maximalwert, der für die Farbe weiß steht, multipliziert. Jeder Graustufenwert wird also mit dem Faktor $\frac{255}{\max{A_{i,j}}}$ multipliziert. In diesem Fall erreicht ein Pixel $r_1$ am Ende der Kante den Maximalwert, da
+			\begin{align*}
+				n(r_1) 	=&\sum_r c(r,r_1) \\
+						=&\; 0 + 1 + 0 \\
+						+&\; 0 + 1 + 0 = 2
+			\end{align*}
+			$$ A(r_0) = g - n(r_0) = 8 - 2 = 6 $$
+			Wir multiplizieren also mit $\frac{255}{6}$. Somit erhalten wir an der Stelle $r_0$ den Wert $212$ und an der Stelle $r_1$ den Wert $255$.
+			Zunächst einmal finden wir, dass $A(i,j)$ genau da am größten ist, wo unser Eingangsbild eine Kante hat. Auch an den Rändern des Bilds findet das SUSAN-Prinzip eine Kante. Es besteht lediglich das Problem, dass um die Kante herum eine kleine Antwort dort ist, wo im originalen Bild nur die Nähe zu einer Kante besteht. Wir schließen daraus, dass die Lokalisation der Kanten zwar durchaus funktioniert, aber verbesserungswürdig ist.
 
 			\begin{figure}[H]\centering
 				\begin{tikzpicture}[fill=black, text=white]
@@ -303,19 +333,72 @@
 					};
 					\normalsize
 				\end{tikzpicture}
-				\caption{Das SUSAN Prinzip findet Ecken und hebt diese sogar in der Antwort hervor}
+				\caption{Das SUSAN Prinzip findet Ecken und hebt diese sogar in der Antwort hervor, $t=1$, $3\times3$ Maske}
 				\label{fig:susan_principle_corners}
 			\end{figure}
 
 			Im Beispiel auf Abbildung \ref{fig:susan_principle_corners} können wir beobachten, dass das SUSAN-Prinzip Ecken besonders hervorhebt. Dieser Effekt spielt eine große Rolle im SUSAN-Eckendetektor, auf den im Abschnitt \ref{ssec:corner_detector} dieser Arbeit weiter eingegangen wird.
 
-			Außer auf Testbildern ist es laut \cite{SUSAN} vorteilhaft, $g$ so groß wie $\frac{3}{4}$ der Maskengröße zu wählen, um die Lokalisation der Kanten durch das Verfahren zu verbessern. Die Wirksamkeit dieser Maßnahme ist beispielhaft an Abbildung \ref{fig:lena_first_test} sichtbar.
+			\begin{figure}[H]\centering
+				\begin{tikzpicture}[fill=black, text=white]
+					\tiny
+					\matrix(m)[matrix of nodes, nodes={draw, minimum size = .6cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!40!black]|102	&|[fill=white!100!black, text=black]|255	&|[fill=white!40!black]|102	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+					};
+					\normalsize
+				\end{tikzpicture}
+				\begin{tikzpicture}[fill=black, text=white]
+					\tiny
+					\matrix(m)[matrix of nodes, nodes={draw, minimum size = .6cm}, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!24!black]|63	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!24!black]|63	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!24!black]|63	&|[fill=white!100!black, text=black]|255	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!100!black, text=black]|255	&|[fill=white!24!black]|63	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!24!black]|63	&|[fill=white!100!black, text=black]|255	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!100!black, text=black]|255	&|[fill=white!24!black]|63	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!24!black]|63	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!49!black]|127	&|[fill=white!24!black]|63	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+						|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	&|[fill=white!0!black]|0	\\ 
+					};
+					\normalsize
+				\end{tikzpicture}
+				\caption{Randbedingung mit den Vorzeichen $\sigma_i$. Insgesamt ist die Antwort stärker}
+				\label{fig:noborder}
+			\end{figure}
+
+			Für $r$ außerhalb des Definitionsbereiches, also $r \notin [0, B-1]_\mathbb{Z} \times [0, H-1]_\mathbb{Z}$, wurde bisher $c_t(r_0,r) \equiv 0$ gewählt, da das in der Implementation leichter zu realisieren ist. Allerdings führt dies dazu, dass der Bildrand als Kante markiert wird. Diese unangepasste Anwendung lässt sich vermeiden, wenn für $r = r_0 + (d_x, d_y) = (x, y) + (d_x, d_y)$ außerhalb des Defnitionsbereichs des Bildes $c_t(r_0, r_0 + (\sigma_x d_x, \sigma_y d_y))$ gewählt wird, wobei $\sigma_i$ für $i \in \{x,y\}$ jeweils ein Vorzeichen ist.
+			Es soll jeweils gelten: Falls $i$ nicht im Definitionsbereich ist, so setze $\sigma_i = -1$, andernfalls setze $\sigma_i = 1$.
+			Diese Randbedingungen kommen einer Spiegelung der Pixel am Rand des Bildes gleich. Wie wir in Abbildung \ref{fig:noborder} sehen, wird die Antwort auf dem Rand nicht $> 0$, falls keine Kante auf dem Rand liegt.
+
+			\begin{figure}[H]\centering
+				\includegraphics[width=.6\textwidth]{./py/cexp.png}
+				\caption{Die Intensitätsdifferenz aufgetragen gegen die Vergleichsfunktionen. Rot: $c_t$, blau: $c_{t,exp}$, $t = 10$}
+			\end{figure}
+
+			In der Praxis verwenden wir statt $c_t$ oft
+			$$
+				c_{t, exp}(r, r_0) =
+					\text{exp}\bigg(-\Big(\frac{I(r) - I(r_0)}{t}\Big)^6\bigg).
+			$$
+			Diese Funktion wird nur annähernd $0$ für große Intensitätsdifferenzen, darum wählen wir zusätzlich $g$ als $\frac{3}{4}$ der Maskengröße. Diese Wahl von $g$ und $c_{t,exp}$ hat den Vorteil, dass für Pixel $r$ mit vorher kleinem $A(r)$ nun $A(r) = 0$ gilt. Dies trägt positiv zur Rauschentfernung bei. Die Wirksamkeit dieser Maßnahme ist beispielhaft an Abbildung \ref{fig:lena_first_test} sichtbar.
 
 			\begin{figure}[H]\centering
 				\includegraphics[width=.3\textwidth]{../examples/lena/lena.png}\quad
 				\includegraphics[width=.3\textwidth]{../examples/lena/no-geom_raw.png}\quad
 				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_raw.png}
-				\caption{Ein Testdurchlauf mit $t=15$ und der $7\times 7$ Maske. Ganz links ist das Originalbild. In der Mitte ist $g$ die Maskengröße und rechts $\frac{3}{4}$ der Maskengröße.}
+				\caption{Ein Testdurchlauf mit $t=15$ und der $7\times 7$ Maske. Ganz links ist das Originalbild. In der Mitte ist $g$ die Maskengröße und $c_t$ die Vergleichsfunktion. $g$ ist rechts $\frac{3}{4}$ der Maskengröße und die Vergleichsfunktion ist $c_{t,exp}$.}
 				\label{fig:lena_first_test}
 			\end{figure}
 
@@ -323,9 +406,56 @@
 
 		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
 			Das oben genannte Prinzip aus Abschnitt \ref{ssec:susan_principle} findet Kanten innerhalb von Bildern, aber die Lokalisation der Kanten könnte besser sein, wie wir in der Abbildung \ref{fig:susan_principle} bereits erkennen konnten. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
-			Zu diesem Zweck berechnen wir die Richtung eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Wir unterscheiden dabei verschiedene Arten von Kanten.
+			Zu diesem Zweck berechnen wir die "Richtung" eines jeden Pixels $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Das scheint im ersten Moment fragwürdig, da Pixel an sich keine Richtung haben, sondern die Kanten. Viel mehr ist die Richtung der Kante an der Stelle des jeweiligen Pixel gemeint. Der Einfachheit halber behalten wir uns trotzdem den Begriff der Richtung des Pixels vor. Wir unterscheiden dabei verschiedene Arten von Kanten.
 
-			Der Inter-Pixel-Fall liegt vor, wenn eine Kante zwischen zwei Pixeln liegt. Der Intra-Pixel-Fall liegt vor, wenn ein Pixel genau auf der Kante liegt. In den Abbildungen stehen die grün markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb der USAN. Die Mitte ist der Nucleus der Maske.
+			Für die Fallunterscheidung zwischen den Pixeln benötigen wir das sogenannte \emph{center of gravity} oder Gravitationszentrum einer jeden USAN:
+				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)} {\sum_r c(r,r_0)} = \frac	{\sum_r r\,c(r,r_0)} {n(r_0)} \in \mathbb{R}^2.$$
+			Das $\text{COG}(r_0)$ ist die gewichtete Summe der durch $c \in \{c_t, c_{t,exp}\}$ bedingt ähnlichen Pixel; also in Relation zu $r_0$ die Richtung, in der die meisten ähnlichen Pixel in der Maske sind.
+			Wir betrachten zum Beispiel die Abbildung \ref{fig:inter-intra} mit der $3\times3$ Maske, $c = c_t$ und unter der Annahme, dass $A := (5,2)$:
+			\begin{align*}
+				\text{COG}(\text{A})
+				= &\;\frac{\sum_r r\,c(r,\text{A})} {\sum_r c(r, \text{A})} \\
+				= &\;0\begin{bmatrix}4\\1\end{bmatrix} + 0\begin{bmatrix}5\\1\end{bmatrix} + 0\begin{bmatrix}6\\1\end{bmatrix} \\
+				+ &\;1\begin{bmatrix}4\\2\end{bmatrix} + 1\begin{bmatrix}5\\2\end{bmatrix} + 1\begin{bmatrix}6\\2\end{bmatrix} \\
+				+ &\;1\begin{bmatrix}4\\3\end{bmatrix} + 1\begin{bmatrix}5\\3\end{bmatrix} + 1\begin{bmatrix}6\\3\end{bmatrix} = \begin{bmatrix}5\\2.5\end{bmatrix}.
+			\end{align*}
+
+			In Fällen wie bei dem Pixel A können wir nun die Richtung folgendermaßen bestimmen: Der Vektor zwischen dem Nucleus $\text{A} := (\text{A}_x, \text{A}_y)$ und seinem Gravitationszentrum $\text{COG}(\text{A}) := (\text{COG}_x(\text{A}), (\text{COG}_y(\text{A}))$ ist gegeben durch $$\text{COG}(\text{A}) - \text{A} := \begin{bmatrix}\text{COG}_x(\text{A}) - \text{A}_x \\ \text{COG}_y(\text{A}) - \text{A}_y\end{bmatrix}.$$
+			Der nun gesuchte Vektor soll nun senkrecht auf $\text{COG}(\text{A}) - \text{A}$ stehen und damit die Richtung der Kante beschreiben. Es gilt:
+			$$\begin{bmatrix}\text{COG}_y(\text{A}) - \text{A}_y \\ \text{COG}_x(\text{A}) - \text{A}_x\end{bmatrix} \bot \; \left(\text{COG}(\text{A}) - \text{A}\right).$$
+
+			Wir beobachten allerdings für das Pixel C in der Abbildung \ref{fig:inter-intra} und den gleichen Bedingungen wie bei der vorherigen Berechnung, dass $\text{COG}(\text{C}) = \text{C}$. Da keine Distanz zwischen $\text{COG}(\text{C})$ und C ist, kann die Richtung der Kante mit dem oben genannten Verfahren nicht ermittelt werden. Bei kleineren Distanzen zwischen einem Pixel $r$ und seinem $\text{COG}(r)$ wird das Verfahren zunehmend ungenau. Stattdessen nutzen wir die Stichprobenvarianz in $x$- und $y$-Richtung folgendermaßen: Summiere für alle Pixel in der Maske $r = (x, y)$ und den Nucleus $r_0 = (x_0, y_0)$ für $c \in \{c_t, c_{t,exp}\}$
+			\begin{align*}
+				Var_{x}(r_0) &:= \frac{1}{N}\sum_{r=(x,y)} (x-x_0)^2 \, c(r,r_0) \\
+				Var_{y}(r_0) &:= \frac{1}{N}\sum_{r=(x,y)} (y-y_0)^2 \, c(r,r_0),
+ 			\end{align*}
+ 			wobei $N$ die Anzahl der Pixel ist, über die iteriert wird.
+ 			Die Varianz ist ein Maß dafür, wie weit die Pixel, die in der USAN liegen, durchschnittlich vom "Mittelwert" (in diesem Fall dem Nucleus $r_0$) in $x$- beziehungsweise $y$-Richtung abweichen. Im Falle des Pixels $\text{C} = (3,5)$ mit der $3\times3$ Maske und der $c = c_t$ sind die Varianzen gegeben durch
+ 			\begin{align*}
+ 				N \; Var_x(\text{C}) 	=\; &(2-3)^2 \cdot 0 \;+\; (3-3)^2 \cdot 1 \;+\; (4-3)^2 \cdot 0  \\
+ 										+\; &(2-3)^2 \cdot 0 \;+\; (3-3)^2 \cdot 1 \;+\; (4-3)^2 \cdot 0  \\
+ 										+\; &(2-3)^2 \cdot 0 \;+\; (3-3)^2 \cdot 1 \;+\; (4-3)^2 \cdot 0  = 0 \\
+ 										\\
+ 				N \; Var_y(\text{C}) 	=\; &(4-5)^2 \cdot 0 \;+\; (4-5)^2 \cdot 1 \;+\; (4-5)^2 \cdot 0  \\
+ 										+\; &(5-5)^2 \cdot 0 \;+\; (5-5)^2 \cdot 1 \;+\; (5-5)^2 \cdot 0  \\
+ 										+\; &(6-5)^2 \cdot 0 \;+\; (6-5)^2 \cdot 1 \;+\; (6-5)^2 \cdot 0  = 2 \\& 
+ 			\end{align*}
+ 			
+ 			Wie im ersten Fall können wir nun die Richtung des Vektors $\frac{Var_x(\text{C})}{Var_y(\text{C})}$ bestimmen. Der normierende Faktor $N$ der Stichprobenvarianz fällt dabei weg. Wir stellen uns vor, eine diagonale Kante liegt vor.
+ 			Dann sehen wir, dass $Var_x(r_0) \approx Var_y(r_0)$. Ob eine \glqq positiv diagonale\grqq{} oder "negativ diagonale" Kante vorliegt (also eine von links unten nach rechts oben oder eine von rechts unten nach links oben), entscheidet nun ein Vorzeichen, welches wir aufgrund von $Var_x > 0$ und $Var_y > 0$ nicht haben.
+ 			Das Vorzeichen können wir allerdings mithilfe folgender Gleichung berechnen:
+ 			$$ Var_{x,y}(r_0) = \bigg(\sum_r (x-x_0) \, (y-y_0) \, c_t(r,r_0)\bigg).$$
+ 			Diese \glqq gemischte Varianz\grqq{} trägt die Information über die Richtung der diagonalen Kante im Vorzeichen.
+ 			Man betrachte zum Beispiel die beiden diagonalen Kanten D und E unter den gleichen Voraussetzungen wie C:
+ 			 \begin{align*}
+ 				N \; Var_x(\text{D}) &= N \; Var_x(\text{E}) = 2 \\
+ 				N \; Var_y(\text{D}) &= N \; Var_y(\text{E}) = 2 \\
+ 				\text{sgn}(Var_{x,y}(\text{D})) 	&=\;\text{sgn}\bigg((-1) \cdot (-1)+ 0 \cdot 0 +1 \cdot 1\bigg) = 1\\
+ 				\text{sgn}(Var_{x,y}(\text{E}))		&=\;\text{sgn}\bigg((-1) \cdot 1+ 0 \cdot 0 +1 \cdot (-1)\bigg) = -1\\
+ 			\end{align*}
+ 			
+
+ 			Für jeden Nucleus gilt: Falls das COG nah am Nucleus liegt und viele Pixel in der USAN liegen, so sprechen wir vom Inter-Pixel-Fall. Der Inter-Pixel-Fall liegt nämlich vor, wenn eine Kante zwischen zwei Pixeln liegt hier benutzen wir die Berechnung der Richtung über das Gravitationszentrum. Der Intra-Pixel-Fall hingegen liegt vor, wenn ein Pixel genau auf der Kante liegt. Hier benutzen wir die Stichprobenvarianz. In der Abbildung \ref{fig:inter-intra} stehen die grün markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb der USAN. Die Mitte ist der Nucleus der Maske.
 			\begin{figure}[H]
 				\begin{center}
 					\begin{minipage}{0.5\textwidth}\centering
@@ -374,49 +504,60 @@
 								|[fill]|\phantom{H}& |[fill=green]|\phantom{H}& |[fill]|\phantom{H}\\
 							};
 						\end{tikzpicture}
+						\begin{tikzpicture}[fill=red]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill=green]|\phantom{H}& |[fill]|\phantom{H}& |[fill]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill=green]|D& |[fill]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill]|\phantom{H}& |[fill=green]|\phantom{H}\\
+							};
+						\end{tikzpicture}
+						\begin{tikzpicture}[fill=red]
+							\tiny
+							\matrix(m)[matrix of nodes, nodes={draw, minimum size = 0.5cm}, nodes in empty cells, column sep=-\pgflinewidth,row sep=-\pgflinewidth]{
+								|[fill]|\phantom{H}& |[fill]|\phantom{H}& |[fill=green]|\phantom{H}\\
+								|[fill]|\phantom{H}& |[fill=green]|E& |[fill]|\phantom{H}\\
+								|[fill=green]|\phantom{H}& |[fill]|\phantom{H}& |[fill]|\phantom{H}\\
+							};
+						\end{tikzpicture}
 
 						Intra-Pixel-Fall
 
 
 					\end{minipage}
 
-					\caption{Inter-Pixel-Fall und Intra-Pixel-Fall für die $3\times 3$ Maske: Die drei rechts abgebildeten USAN wurden durch wählen des Nucleus an den mit A, B und C markierten Stellen im Eingangsbild ausgewertet. Die grün markierten Pixel stehen für Teile der USAN.}
+					\caption{Inter-Pixel-Fall und Intra-Pixel-Fall für die $3\times 3$ Maske: Die drei rechts abgebildeten USAN wurden durch Wahl des Nucleus an den mit A, B und C markierten Stellen im Eingangsbild ausgewertet. Die grün markierten Pixel stehen für Teile der USAN. Die Nuclei D und E gelten nur der weiteren Illustration von Möglichkeiten und sind nicht im Eingangsbild vorzufinden.}
 					\label{fig:inter-intra}
 				\end{center}
 			\end{figure}
 
-			Wir werden zunächst jede Antwort in einen der zwei Fälle einsortieren, danach können wir die Richtung bestimmen.
-
+			Zusammenfassend rechnen wir für jedes Pixel im Bild:
 			\begin{enumerate}
 				\item \textbf{Inter-Pixel:}
 
-				\noindent Falls die Größe der USAN größer ist als der Maskendurchmesser und die Distanz zwischen $\text{COG}(r_0)$ und $r_0$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
+				\noindent Falls die Größe der USAN größer ist als der Maskendurchmesser und die Distanz zwischen $\text{COG}(r_0)$ und $r_0=(x_0, y_0)$ größer als $1$ Pixel ist, so ist die Richtung $D(r_0)$ gegeben durch
 				$$ D(r_0) = \begin{cases}
 					\text{arctan}\bigg(
-						\frac{x_0 - \text{COG}(x_0)}
-						{y_0 - \text{COG}(y_0)}
-					\bigg) & \text{falls } \text{COG}(y_0) \neq y_0 \\
+						\frac{x_0 - \text{COG}_x(r_0)}
+						{y_0 - \text{COG}_y(r_0)}
+					\bigg) & \text{falls } \text{COG}_y(r_0) \neq y_0 \\
 					
 					\frac{\pi}{2} & \text{sonst}
-
 				\end{cases}, $$
-				wobei
-				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)}	{\sum_r c(r,r_0)} = \frac	{\sum_r r\,c(r,r_0)} {n(r_0)}$$
-				das sogenannte Gravitationszentrum (\emph{center of gravity}) ist.
+
 				\item \textbf{Intra-Pixel:}
 				
-				\noindent Andernfalls müssen wir die zweiten Momente der USAN folgendermaßen berechnen:
+				\noindent Andernfalls müssen wir die Stichprobenvarianzen der USAN folgendermaßen berechnen: Wir summieren über alle Pixel $r = (x, y)$ in der Maske und $r_0 = (x_0, y_0)$
 				\begin{align*}
-					d_{x_0} &:= \sum_r (x-x_0)^2 \, c_t(r,r_0) \\
-					d_{y_0} &:= \sum_r (y-y_0)^2 \, c_t(r,r_0) \\
+					N \; Var_x(r_0) &:= \sum_r (x-x_0)^2 \, c_t(r,r_0) \\
+					N \; Var_y(r_0) &:= \sum_r (y-y_0)^2 \, c_t(r,r_0) \\
 					\sigma 	&:= -\text{sgn}\bigg(\sum_r (x-x_0) \, (y-y_0) \, c_t(r,r_0)\bigg)
 				\end{align*}
 				Dabei ergibt sich die Kantenrichtung als
 				$$ D(r_0) = \begin{cases}
-						\sigma \, \text{arctan} \, \frac{d_{y_0}}{d_{x_0}} 	&	\text{falls } d_{x_0} \neq 0 \\ 
+						\sigma \, \text{arctan} \, \frac{Var_y(r_0)}{Var_x(r_0)} 	&	\text{falls } Var_x(r_0) \neq 0 \\ 
 						\frac{\pi}{2}										&	\text{sonst}
-					\end{cases}$$
-				Falls allerdings $d_{x_0} = 0$, so ist $D(r_0) = \frac{\pi}{2}$
+					\end{cases}.$$
 			\end{enumerate}
 
 			\begin{figure}[H]\centering
@@ -427,7 +568,9 @@
 				\label{fig:directions_test}
 			\end{figure}
 
-			Die Berechnungen für die jeweiligen Kantenrichtungen an jedem Pixel werden in der Implementation gleichzeitig mit den Berechnungen für das SUSAN-Prinzip durchgeführt. Auf diese Weise müssen $c_t$ und $n$ an jeder Stelle nur einmal berechnet werden.
+			Für Pixel außerhalb des Definitionsbereiches $r \notin [0, B-1]_\mathbb{Z} \times [0, H-1]_\mathbb{Z}$ legen wir für diese Berechnungen die gleichen Randbedingungen fest, die wir auch schon für den Hauptteil des Algorithmus in Sektion \ref{ssec:susan_principle} festgelegt haben.
+
+			Die Berechnungen für die jeweiligen Kantenrichtungen an jedem Pixel werden in der Implementation gleichzeitig mit den Berechnungen für das SUSAN-Prinzip durchgeführt. Auf diese Weise müssen $c$ und $n$ an jeder Stelle nur einmal berechnet werden.
 
 			\begin{figure}[H]\centering
 				\begin{tikzpicture}[fill=black, text=white]
@@ -450,7 +593,9 @@
 				\caption{Eingangsbild wie in Abbildung \ref{fig:susan_principle}. Durch die Non-Maximum-Suppression wurde die Kante pixelgenau lokalisiert}
 			\end{figure}
 
-			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Kapitel \ref{sec:implementation} wird darauf eingegangen, wie genau dieser Prozess implementiert wurde.
+			Die Richtung lohnt sich nur für diejenigen Pixel $(i,j)$ zu bestimmen, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen. Wir erhalten so ein neues Bild. In Sektion \ref{ssec:nonmax_implem} wird darauf eingegangen, wie genau dieser Prozess implementiert wurde.
+			
+			Die dort vorgestellte Prozedur kategorisiert jedes Pixel nach der generellen Richtung jeder Kante mit $\frac{pi}{8}$ Genauigkeit. Senkrecht zu dieser Richtung wird dann nur das Maximum der direkten Nachbarschaft erhalten, der Rest wird aus dem Kantenbild entfernt (also $=0$ gesetzt).
 
 			Die Non-Maximum-Suppression unterdrückt in unserem Beispiel tatsächlich alle diejenigen Pixel, die keine lokalen Maxima in der Richtung senkrecht zur Kante sind. Auch für größere Bilder erzielt die Non-Maximum-Suppression den erwünschten Effekt, siehe Abbildung \ref{fig:lena_nonmax_supp}.
 
@@ -473,7 +618,7 @@
 				\item \textbf{1 Nachbar:}
 					Überprüfe, ob in einer Reichweite von 3 Pixeln eine Linie mit der gleichen Richtung existiert. Falls ja, verbinde die Pixel miteinander.
 				\item \textbf{2 Nachbarn:}
-					Falls das Pixel adjazent zu einer diagonalen Linie ist, entferne es.
+					Falls das Pixel benachbart zu einer diagonalen Linie ist, entferne es.
 					Falls das Pixel außerhalb einer sonst horizontalen oder vertikalen Linie liegt, verschiebe die Antwort des Pixels in die Lücke der vertikalen oder horizontalen Linie
 				\item \textbf{3 Nachbarn:}
 					Falls die drei Nachbarn in einer Linie liegen, entferne die Antwort des Pixels.
@@ -497,7 +642,7 @@
 
 			\begin{figure}
 				%dddd
-				\caption{test}
+				\caption{BLABLUBBI thinout neighbors??}
 				\label{fig:thinout-neighbors}
 			\end{figure}
 
@@ -532,11 +677,11 @@
 
 		\begin{figure}[H] \centering
 			\begin{lstlisting}[language=Python]
-				import Susan
+	import Susan
 
-				t = 15
-				S = Susan("lena.png")
-				S.detect_edges_mp(t)
+	t = 15
+	S = Susan("lena.png")
+	S.detect_edges_mp(t)
 			\end{lstlisting}
 		\caption{Nutzen der Python 3 Applikation}
 		\label{fig:minimal-working-example}
@@ -584,7 +729,7 @@
 				Ein Pixel in einem 8-bit Graustufenbild kann $2^8 = 256$ mögliche Intensitäten annehmen, demnach braucht das Feld für die Differenz zweier solcher Graustufenintensitäten $512$ Plätze.
 				Regulär werden Felder entweder ab $0$ oder $1$ indiziert. In Python werden Felder ab $0$ indiziert, allerdings bietet Python den Vorteil, dass man mit Index $-i$ das $i$-te Element von hinten abrufen kann. In der Implementation ist diese Lookup-Tabelle dank dieser speziellen Art der Indizierung einfach und elegant: Der Index $a-b$ des Feldes steht für $c_t(a,b)$.
 
-			\subsection{Non-Maximum-Suppression}
+			\subsection{Non-Maximum-Suppression}\label{ssec:nonmax_implem}
 				Die Non-Maximum-Suppression ist ein Vorgang, bei der jede Kante genauer lokalisiert wird. Entlang einer Kante soll immer nur die maximale Antwort erhalten bleiben.
 				Um die Non-Maximum-Suppression durchzuführen, wird zunächst für jedes Pixel $(i,j)$ mit $A(i,j) > 0$ die Kantenrichtung $D(i,j)$ bestimmt. Die möglichen Kantenrichtungen werden dann für einen Zwischenschritt kategorisiert. Die Kategorien sind \emph{negativ diagonal}, \emph{vertikal}, \emph{positiv diagonal} und \emph{horizontal}. Die Kategorie bestimmt, welche zwei adjazenten Pixel $C$ für die Non-Maximum-Suppression interessant sind.
 				\begin{center}

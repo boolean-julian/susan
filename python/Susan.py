@@ -129,10 +129,10 @@ class Susan:
 
 		for i in range(start, end):
 			for j in range(self.width):
-				usan_area 	= 0			# sum over all comparisons in usan
+				usan_area 		= 0			# sum over all comparisons in usan
 
-				i_cog 		= 0			# center of gravity (vertical position)
-				j_cog 		= 0			# center of gravity (horizontal position)
+				i_cog 			= 0			# center of gravity (vertical position)
+				j_cog 			= 0			# center of gravity (horizontal position)
 
 				i2_intra		= 0			# second moment of usan value (vertical position)
 				j2_intra		= 0			# second moment of usan value (horizontal position)
@@ -143,18 +143,23 @@ class Susan:
 					x = i+r[0]
 					y = j+r[1]
 
-					if x >= 0 and x < self.height and y >= 0 and y < self.width:
-						curr = self.compare(self.img, (i,j), (x,y), t)
-						if curr != 0:
-							usan_area = usan_area + curr
+					# flip boundaries if necessary
+					if x < 0 or x >= self.height-1:
+						x = i-r[0]
+					if y < 0 or y >= self.width-1:
+						y = j-r[1]
 
-							i_cog += x * curr
-							j_cog += y * curr
+					curr = self.compare(self.img, (i,j), (x,y), t)
 
-							i2_intra += (r[0]**2) * curr
-							j2_intra += (r[1]**2) * curr
-							ij_intra += r[0] * r[1] * curr
+					if curr != 0:
+						usan_area = usan_area + curr
 
+						i_cog += x * curr
+						j_cog += y * curr
+
+						i2_intra += (r[0]**2) * curr
+						j2_intra += (r[1]**2) * curr
+						ij_intra += r[0] * r[1] * curr
 
 				i_cog = i_cog / usan_area
 				j_cog = j_cog / usan_area
