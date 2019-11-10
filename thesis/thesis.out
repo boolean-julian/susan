@@ -1,0 +1,19 @@
+\BOOKMARK [0][-]{chapter.2}{Einf\374hrung}{}% 1
+\BOOKMARK [0][-]{chapter.3}{Mathematische Grundlagen}{}% 2
+\BOOKMARK [1][-]{section.4}{Bildverarbeitung}{chapter.3}% 3
+\BOOKMARK [0][-]{chapter.6}{Der SUSAN Kantendetektor}{}% 4
+\BOOKMARK [1][-]{section.7}{Der Algorithmus}{chapter.6}% 5
+\BOOKMARK [2][-]{subsection.8}{Das SUSAN-Prinzip}{section.7}% 6
+\BOOKMARK [2][-]{subsection.15}{Non-Maximum-Suppression}{section.7}% 7
+\BOOKMARK [2][-]{subsection.22}{Ausd\374nnen}{section.7}% 8
+\BOOKMARK [2][-]{subsection.25}{Der SUSAN-Eckendetektor}{section.7}% 9
+\BOOKMARK [1][-]{section.30}{Implementation}{chapter.6}% 10
+\BOOKMARK [2][-]{subsection.38}{Vergleichsfunktion}{section.30}% 11
+\BOOKMARK [2][-]{subsection.39}{Non-Maximum-Suppression}{section.30}% 12
+\BOOKMARK [2][-]{subsection.40}{Parallelisierung}{section.30}% 13
+\BOOKMARK [1][-]{section.41}{Numerische Experimente}{chapter.6}% 14
+\BOOKMARK [2][-]{subsection.42}{Variation des Grenzwerts}{section.41}% 15
+\BOOKMARK [2][-]{subsection.43}{Vergleich mit dem Kantendetektor von Canny}{section.41}% 16
+\BOOKMARK [2][-]{subsection.45}{Der Eckendetektor}{section.41}% 17
+\BOOKMARK [1][-]{section.46}{Heuristik}{chapter.6}% 18
+\BOOKMARK [2][-]{subsection.47}{Erkl\344rung des SUSAN-Prinzips}{section.46}% 19

@@ -125,7 +125,7 @@ class Susan:
 	# for one chunk of height of total size (chunkend - chunkstart) * imagewidth
 	# note that (i,j) = r_0 and (x,y) = r
 	def _nbd_compare_mp(self, start, end, t, geometric):
-		diam = 2*self.mask_rad			# mask diameter
+		diam = np.ceil(2*self.mask_rad)			# mask diameter
 
 		for i in range(start, end):
 			for j in range(self.width):
@@ -164,6 +164,8 @@ class Susan:
 				i_cog = i_cog / usan_area
 				j_cog = j_cog / usan_area
 
+
+
 				self.i_cogs[i*self.width+j] = i_cog
 				self.j_cogs[i*self.width+j] = j_cog
 
@@ -176,21 +178,24 @@ class Susan:
 					if usan_area > diam and self.dist_from_cog[i*self.width+j] >= 1:
 						if j_cog != j:
 							direction = np.arctan((i-i_cog)/(j-j_cog))
-					
 						else:
 							direction = np.pi/2
-							
 
 					# intra pixel case
 					elif i2_intra != 0:
 						phi = (j2_intra/i2_intra)
 						if ij_intra == 0:
-							direction = np.arctan(phi)
+							if j2_intra > i2_intra:
+								direction = np.pi/2
+							else:
+								direction = 0
 						else:
-							direction = -1 * np.sign(ij_intra) * np.arctan(phi)
-							
+							direction = -np.sign(ij_intra) * np.arctan(phi)
+
 					else:
 						direction = np.pi/2
+
+
 
 				index = i*self.width+j
 				self.direction[index]	= direction
@@ -202,36 +207,54 @@ class Susan:
 	_orientations = np.pi*np.array([-0.375, -0.125, 0.125, 0.375])
 	def _suppress_nonmax_mp(self, start, end):
 		for i in range(start, end):
-			if i >= 1 and i < self.height-1:
-				for j in range(1,self.width-1):
-					if self.direction[i*self.width+j] != 2:
-						max_here = True
-						index = i*self.width+j
-						r_curr = self.response[index]
+			for j in range(self.width):
+				if self.direction[i*self.width+j] != 2:
+					max_here = True
+					index = i*self.width+j
+					r_curr = self.response[index]
 
-						# negative diagonal
-						if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
-							if self.response[index+1-self.width] > r_curr or self.response[index-1+self.width] > r_curr:
-								max_here = False
+					di_p = 1
+					di_n = -1
 
-						# vertical
-						elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
-							if self.response[index+1] > r_curr or self.response[index-1] > r_curr:
-								max_here = False
+					dj_p = 1
+					dj_n = -1
 
-						# positive diagonal
-						elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
-							if self.response[index+self.width+1] > r_curr or self.response[index-self.width-1] > r_curr:
-								max_here = False
+					if i + di_p >= self.height:
+						di_p = -di_p
+					if i - di_n < 0:
+						di_n = -di_n
+					if j + dj_p >= self.width:
+						dj_p = -dj_p
+					if j - dj_n < 0:
+						dj_n = -dj_n
 
-						# horizontal
-						else:
-							if self.response[index+self.width] > r_curr or self.response[index-self.width] > r_curr:
-								max_here = False
+					di_p *= self.width
+					di_n *= self.width
 
-						# apply nonmax suppression
-						if not max_here:
-							self.response[index] = 0
+
+					# negative diagonal
+					if self.direction[index] > self._orientations[0] and self.direction[index] <= self._orientations[1]:
+						if self.response[index+dj_p+di_n] > r_curr or self.response[index+dj_n+di_p] > r_curr:
+							max_here = False
+
+					# vertical
+					elif self.direction[index] > self._orientations[1] and self.direction[index] <= self._orientations[2]:
+						if self.response[index+dj_p] > r_curr or self.response[index+dj_n] > r_curr:
+							max_here = False
+
+					# positive diagonal
+					elif self.direction[index] > self._orientations[2] and self.direction[index] <= self._orientations[3]:
+						if self.response[index+dj_p+di_p] > r_curr or self.response[index+dj_n+di_n] > r_curr:
+							max_here = False
+
+					# horizontal
+					else:
+						if self.response[index+di_p] > r_curr or self.response[index+di_n] > r_curr:
+							max_here = False
+
+					# apply nonmax suppression
+					if not max_here:
+						self.response[index] = 0
 
 
 	# heat map visualization for self.direction
