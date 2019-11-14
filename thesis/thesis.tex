@@ -809,58 +809,55 @@
 
 				$$ \bigcup_{i=1}^n \left(S_i, S_{i+1}\right]_\mathbb{Z} = (0,H]_\mathbb{Z} = [1,H]_\mathbb{Z} $$
 
-		
-		\section{Numerische Experimente}
-			\subsection{Variation des Grenzwerts}
-			\subsection{Vergleich mit dem Kantendetektor von Canny}
-				In diesem Abschnitt wird der Kantendetektor von Canny [x] kurz vorgestellt und anschließend mit dem SUSAN-Kantendetektor verglichen. Der Kantendetektor von Canny basiert auf dem Prinzip der Ableitung: Ziel ist es, die Stellen der größten Änderung zu markieren. In der stetigen Analysis sind diese Stellen die Nullstellen der zweiten Ableitung. Da wir allerdings keine stetige Funktion vorliegen haben, sondern lediglich ein digitales Bild, müssen wir eine Approximation finden.
+		\section{Vergleich mit dem Kantendetektor von Canny}
+			In diesem Abschnitt wird der Kantendetektor von Canny [x] kurz vorgestellt und anschließend mit dem SUSAN-Kantendetektor verglichen. Der Kantendetektor von Canny basiert auf dem Prinzip der Ableitung: Ziel ist es, die Stellen der größten Änderung zu markieren. In der stetigen Analysis sind diese Stellen die Nullstellen der zweiten Ableitung. Da wir allerdings keine stetige Funktion vorliegen haben, sondern lediglich ein digitales Bild, müssen wir eine Approximation finden.
 
-				Zunächst aber wird das Bild geglättet, meist durch einen Gausschen Weichzeichner, wie er bereits in [x] besprochen wurde.
+			Zunächst aber wird das Bild geglättet, meist durch einen Gausschen Weichzeichner, wie er bereits in [x] besprochen wurde.
 
-				Unter den Begriff Sobel-Operator fallen Filtermasken, die eine Approximation der ersten Ableitung in eine Richtung berechnen und orthogonal dazu das Bild glätten.
+			Unter den Begriff Sobel-Operator fallen Filtermasken, die eine Approximation der ersten Ableitung in eine Richtung berechnen und orthogonal dazu das Bild glätten.
 
-				Mit den Sobel-Operatoren $S_x$ und $S_y$ lassen sich die geglätteten Approximationen der partiellen Ableitungen folgendermaßen berechnen
-				$$ g_x = S_x * I \qquad g_y = S_y * I, $$
-				wobei 
-			 	$$ S_x = \begin{pmatrix}
-			 		-1 & 0 & 1\\
-			 		-2 & 0 & 2\\
-			 		-1 & 0 & 1\\
-			 	\end{pmatrix} \qquad
-			 	 S_y = \begin{pmatrix}
-			 		1 & 2 & 1 \\
-			 		0  & 0  & 0  \\
-			 		-1  & -2  & -1
-				\end{pmatrix}.
-				$$
-				Danach werden die beiden beiden gefalteten Bilder folgendermaßen addiert
-				$$ O(i,j) = |g_x(i,j) + g_y(i,j)|. $$
-				Weiterhin wird, ähnlich wie beim SUSAN-Kantendetektor, eine Non-Maximum-Suppression durchgeführt. Die Kantenrichtung ist durch 
-				$$ \varphi(i,j) = \begin{cases}
-					\text{arctan}\bigg(
-						\frac{g_y(i,j)}
-						{g_x(i,j)}
-					\bigg) & \text{falls } g_x(i,j) \neq 0 \\
-					
-					\frac{\pi}{2} & \text{sonst}
+			Mit den Sobel-Operatoren $S_x$ und $S_y$ lassen sich die geglätteten Approximationen der partiellen Ableitungen folgendermaßen berechnen
+			$$ g_x = S_x * I \qquad g_y = S_y * I, $$
+			wobei 
+		 	$$ S_x = \begin{pmatrix}
+		 		-1 & 0 & 1\\
+		 		-2 & 0 & 2\\
+		 		-1 & 0 & 1\\
+		 	\end{pmatrix} \qquad
+		 	 S_y = \begin{pmatrix}
+		 		1 & 2 & 1 \\
+		 		0  & 0  & 0  \\
+		 		-1  & -2  & -1
+			\end{pmatrix}.
+			$$
+			Danach werden die beiden beiden gefalteten Bilder folgendermaßen addiert
+			$$ O(i,j) = |g_x(i,j) + g_y(i,j)|. $$
+			Weiterhin wird, ähnlich wie beim SUSAN-Kantendetektor, eine Non-Maximum-Suppression durchgeführt. Die Kantenrichtung ist durch 
+			$$ \varphi(i,j) = \begin{cases}
+				\text{arctan}\bigg(
+					\frac{g_y(i,j)}
+					{g_x(i,j)}
+				\bigg) & \text{falls } g_x(i,j) \neq 0 \\
+				
+				\frac{\pi}{2} & \text{sonst}
 
-				\end{cases}, $$
-				bestimmt.
+			\end{cases}, $$
+			bestimmt.
 
-				Zum Vergleich mit meiner Implementation des SUSAN-Kantendetektors ziehen wir nun die OpenCV-Implementation des Canny-Kantendetektors heran. Durch die Vektorisierbarkeit der Teilschritte lässt sich über Cannys Kantendetektor sagen, dass die Implementation in Python 3 schnellere Laufzeiten mit sich bringt. Nichtlineare Operationen müssen in Python 3, wie in den meisten anderen Programmiersprachen, über Schleifen geregelt werden. Diese sind verglichen langsam zu beispielsweise der Programmiersprache C. Das liegt begründet im dynamischen Charakters von Python \cite{pyslow}.
+			Zum Vergleich mit meiner Implementation des SUSAN-Kantendetektors ziehen wir nun die OpenCV-Implementation des Canny-Kantendetektors heran. Durch die Vektorisierbarkeit der Teilschritte lässt sich über Cannys Kantendetektor sagen, dass die Implementation in Python 3 schnellere Laufzeiten mit sich bringt. Nichtlineare Operationen müssen in Python 3, wie in den meisten anderen Programmiersprachen, über Schleifen geregelt werden. Diese sind verglichen langsam zu beispielsweise der Programmiersprache C. Das liegt begründet im dynamischen Charakter von Python \cite{pyslow}.
 
-				Für lineare Probleme ist die Vektorisierung ein Weg, die Dynamik Pythons auszunutzen, um Ergebnisse schnell zu berechnen. Der nichtlineare Charakter des SUSAN-Detektors lässt allerdings nur einfache Parallelisierungen zu, keine Vektorisierung.
+			Für lineare Probleme ist die Vektorisierung ein Weg, die Dynamik Pythons auszunutzen, um Ergebnisse schnell zu berechnen. Der nichtlineare Charakter des SUSAN-Detektors lässt allerdings nur einfache Parallelisierungen zu, keine Vektorisierung.
 
-				Allerdings bringt der SUSAN-Kantendetektor einen besonders großen Vorteil mit sich. Cannys Kantendetektor findet nämlich im Gegensatz zum SUSAN-Kantendetektor keine Ecken, wie auch bereits in \cite{SUSAN} beschrieben wird.
+			Allerdings bringt der SUSAN-Kantendetektor einen besonders großen Vorteil mit sich. Cannys Kantendetektor findet nämlich im Gegensatz zum SUSAN-Kantendetektor keine Ecken, wie auch bereits in \cite{SUSAN} beschrieben wurde.
 
-				\begin{figure}[H]\centering
-					\includegraphics[width=.45\textwidth]{../examples/original/original-canny.png}\quad
-					\includegraphics[width=.45\textwidth]{../examples/original/test_nonmax_supp.png}
-					\caption{Links: Canny, Rechts: SUSAN.}
-					\label{fig:canny_no_corners}
-				\end{figure}
+			\begin{figure}[H]\centering
+				\includegraphics[width=.45\textwidth]{../examples/original/original-canny.png}\quad
+				\includegraphics[width=.45\textwidth]{../examples/original/test_nonmax_supp.png}
+				\caption{Links: Canny, Rechts: SUSAN.}
+				\label{fig:canny_no_corners}
+			\end{figure}
 
-			\subsection{Der Eckendetektor}
+			In Abbildung \ref{fig:canny_no_corners} ist dieser Unterschied gut zu erkennen.
 			
 
 		\section{Heuristik}
@@ -978,6 +975,10 @@
 					\end{center}
 				\end{figure}
 				Durch das SUSAN-Prinzip und die Non-Maximum-Suppression konnten wir die Kante ohne Ableitung bestimmen.
+
+		\chapter{Diskussion}
+			Der SUSAN-Kantendetektor findet Kanten auf digitalen Bildern pixelgenau, wie wir an mehreren Beispielen erkennen konnten. 
+
 
 \begin{thebibliography}{56}
 
