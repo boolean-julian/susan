@@ -22,7 +22,12 @@
 \usepackage{listings}
 \usepackage{extarrows}
 \usepackage[main=ngerman]{babel}
+\usepackage{marvosym}
+\usepackage[nottoc]{tocbibind}
 \hypersetup{hypertexnames=false}
+
+\lstset{numbers=left, numberstyle=\tiny, numbersep=5pt}
+\lstset{language=Python}
 
 \usetikzlibrary{matrix}
 
@@ -42,7 +47,7 @@
 \newenvironment{myAbstract}{\section*{Abstract}}{}
 
 \begin{document}
-
+\pagenumbering{roman}
 \newgeometry{top=35mm, left=25mm, right=25mm, bottom=10mm}
 \begin{titlepage}
 	\begin{center}
@@ -78,18 +83,51 @@
 \restoregeometry
 \newgeometry{left=45mm, right=45mm}
 \pagestyle{empty}
+\setcounter{page}{2}
 
-%\begin{myAbstract}
-%	\lipsum[1]
-%\end{myAbstract}
+\pagebreak
+\newgeometry{top=210mm}
+\noindent
+\begin{tabular}{l}
+Georg-August-Universität Göttingen\\
+Institut für Informatik\\
+\end{tabular}\\[1em]
+\begin{tabular}{ll}
+	\Telefon 	&+49 (551) 39-172000\\
+	\FAX 		&+49 (551) 39-14403\\
+	\Letter 	&\texttt{office@informatik.uni-goettingen.de}\\
+\end{tabular}\\[1em]
+\begin{tabular}{l}
+\texttt{www.informatik.uni-goettingen.de}\\
+\end{tabular}\\[1em]
 
-\tableofcontents
+\pagebreak
+
+\noindent Ich erkläre hiermit, dass ich die vorliegende Arbeit selbständig verfasst und keine anderen als die angegebenen Quellen und Hilfsmittel verwendet habe.\\[0.7em]
+\phantom{H}\includegraphics[height=3em]{sign.png}\\[0.5em]
+Göttingen, den \today \hspace{2em}
+
 \pagebreak
 \restoregeometry
+\pagenumbering{arabic}
+\setcounter{page}{0}
+\newgeometry{left=45mm, right=45mm}
+\tableofcontents
+
+\pagebreak
+
+\restoregeometry
+
 \pagestyle{headings}
 
 \chapter{Einführung}
-	Kantendetektoren sind ein wichtiges Werkzeug der Bildverarbeitung...
+	Ein Kantendetektor ist ein Werkzeug, welches die Stellen der größten Intensitätsunterschiede in Digitalbildern feststellt und markiert. Der Mensch kann durch sein Sehvermögen mit Leichtigkeit Kanten lokalisieren. Um diesen Prozess zu automatisieren, benötigen wir allerdings ein mathematisches Prinzip, welches unabhängig vom spezifischen Bild pixelgenaue Resultate liefert.
+
+	Auf der Kantendetektion basieren viele weiterführende Verfahren, zum Beispiel aus den Feldern der kantenbasierten Bildverbesserung und des maschinellen Sehens, in denen die für das menschliche Auge wichtige optische Information über die Position, Länge und Orientierung der Kanten auf den jeweiligen digitalen Bildern in besonderem Maße berücksichtigt wird.
+
+	Ein solcher Kantendetektor, nämlich der \emph{SUSAN}-Kantendetektor (\emph{smallest univalue segment assimilating nucleus}) aus \cite{SUSAN}, wird in dieser Arbeit im Detail vorgestellt. Die Idee dabei ist, für alle Punkte des Bildes festzustellen, welchen Anteil einer den Punkt umgebenden Fläche des Bildes \glqq ähnlich\grqq{} zu dem jeweiligen Punkt ist. Dabei meint \glqq Ähnlichkeit\grqq{} in diesem Fall, dass der Intensitätsunterschied unter einer vorgegebenen Grenze liegt. Jede einem Punkt (oder Nukleus) zugehörigen Fläche ähnlicher Punkte nennen wir \emph{USAN} (\emph{univalue segment assimilating nucleus}). Unser Ziel ist es, die Punkte (oder Nuklei) der kleinsten USANs zu markieren. Zusätzlich habe ich den \emph{SUSAN}-Kantendetektor in Python 3 implementiert (\cite{mysoftware}).
+
+	Im ersten Kapitel dieser Arbeit besprechen wir die mathematischen Grundlagen der Bildverarbeitung. Im zweiten Kapitel wird der Kantendetektor neben meiner persönlichen Implementation des Kantendetektors vorgestellt und mit dem Kantendetektor von Canny verglichen. Zuletzt diskutiere ich die Vor- und Nachteile des \emph{SUSAN}-Kantendetektors und meiner Implementation.
 
 \chapter{Mathematische Grundlagen}
 	\section{Bildverarbeitung}\label{sec:imageproc}
@@ -112,12 +150,12 @@
 		$$ O = K * I.$$
 
 		Ein Beispiel für eine solche Filtermaske bietet der sogenannte Gaußsche Weichzeichner, der in \cite{gaussianblur} näher beschrieben wird. Im stetigen Fall würde man ihn anwenden, indem man eine Funktion mit der Funktion der Normalverteilung in zwei Dimensionen faltet. Die Funktion der Normalverteilung lautet für einen Parameter $\sigma > 0$:
-		$$ g(x,y) := \frac{1}{2 \pi \sigma} \;e ^{-\frac{x^2 + y^2}{2\sigma^2}}. $$
+		$$ g_\sigma(x,y) := \frac{1}{2 \pi \sigma} \;e ^{-\frac{x^2 + y^2}{2\sigma^2}}. $$
 		Bevor wir mit einem diskreten Bild falten können, müssen wir eine endlich große, diskrete Filtermaske aus der Definition von $g$ gewinnen. Dies gelingt dadurch, dass wir die Funktion um jedes Pixel integrieren:
-		$$\hat G(x,y) = \int_{y-\frac{1}{2}}^{y+\frac{1}{2}} \int_{x-\frac{1}{2}}^{x+\frac{1}{2}} g(s,t) \; ds dt$$
+		$$\hat G_\sigma(x,y) = \int_{y-\frac{1}{2}}^{y+\frac{1}{2}} \int_{x-\frac{1}{2}}^{x+\frac{1}{2}} g_\sigma(s,t) \; ds dt$$
 		Für eine (große) Anzahl an Stichproben $N$ können wir diese Integration durch Rechtecke approximieren.
 		Man wähle eine Größe $n = m$ der Filtermaske und summiere für $x,y \in [-n, n]_\mathbb{Z}$ jeweils
-		$$G(x,y) = \frac{1}{N}\sum_{i=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor}\, \sum_{j=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor} g(x+\frac{i}{N},y+\frac{j}{N})$$
+		$$G_\sigma(x,y) = \frac{1}{N}\sum_{i=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor}\, \sum_{j=-\lceil\frac{N-1}{2}\rceil}^{\lfloor\frac{N-1}{2}\rfloor} g_\sigma(x+\frac{i}{N},y+\frac{j}{N})$$
 		für ein passendes $\sigma$ und ein großes $N$.
 		Die Größe der Filtermaske bestimmt sich in diesem Fall über das gewählte $\sigma$. Eine Faustregel dafür lautet, dass falls $\sqrt{\hat x^2 + \hat y^2} \geq 3\sigma$ gilt, auch $g(\hat x,\hat y) \approx 0$ gilt. Ausgehend davon können wir $n = \lfloor3\sigma\rfloor-1$ wählen und erhalten somit die Filtermaske
 		$$G = \frac{1}{273}
@@ -174,8 +212,6 @@
 					&= \frac{1}{273} \left( 255 \cdot 7 + 255 \cdot 26 + 255 \cdot 41 + 255 \cdot 26 + 255 \cdot 7 \right) 	\\
 					&= \frac{255}{273} \left(7 + 26 + 41 + 26 + 7 \right) = 99.94 \approx 100
 		\end{align*}
-
-
 
 \chapter{Der SUSAN Kantendetektor}
 	In diesem Kapitel stellen wir den Kantendetektions-Algorithmus nach dem SUSAN Prinzip aus \cite{SUSAN} vor, danach erläutern wir einige Details zur Implementation des Algorithmus in Python 3. Im dritten Abschnitt leiten wir her, warum der SUSAN-Kantendetektor funktioniert und im letzten Teil führen wir ein paar numerische Experimente durch.
@@ -404,7 +440,7 @@
 				\label{fig:lena_first_test}
 			\end{figure}
 
-			Da dieser Algorithmus von den lokalen Bedingungen jedes Pixels abhängt, kann dieser Algorithmus nicht durch eine Faltung ausgedrückt werden, wie etwa eine Reihe anderer Filter, darunter der Gaussche Filter aus \ref{sec:imageproc}, aber auch der Kantendetektor von Canny (siehe [x]).
+			Da dieser Algorithmus von den lokalen Bedingungen jedes Pixels abhängt, kann dieser Algorithmus nicht durch eine Faltung ausgedrückt werden, wie etwa eine Reihe anderer Filter, darunter der Gaussche Filter aus \ref{sec:imageproc}, aber auch der Kantendetektor von Canny (siehe \ref{sec:canny}).
 
 		\subsection{Non-Maximum-Suppression}\label{ssec:nonmax}
 			Das oben genannte Prinzip aus Abschnitt \ref{ssec:susan_principle} findet Kanten innerhalb von Bildern, aber die Lokalisation der Kanten könnte besser sein, wie wir in der Abbildung \ref{fig:susan_principle} bereits erkennen konnten. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt.
@@ -809,10 +845,10 @@
 
 				$$ \bigcup_{i=1}^n \left(S_i, S_{i+1}\right]_\mathbb{Z} = (0,H]_\mathbb{Z} = [1,H]_\mathbb{Z} $$
 
-		\section{Vergleich mit dem Kantendetektor von Canny}
-			In diesem Abschnitt wird der Kantendetektor von Canny [x] kurz vorgestellt und anschließend mit dem SUSAN-Kantendetektor verglichen. Der Kantendetektor von Canny basiert auf dem Prinzip der Ableitung: Ziel ist es, die Stellen der größten Änderung zu markieren. In der stetigen Analysis sind diese Stellen die Nullstellen der zweiten Ableitung. Da wir allerdings keine stetige Funktion vorliegen haben, sondern lediglich ein digitales Bild, müssen wir eine Approximation finden.
+		\section{Vergleich mit dem Kantendetektor von Canny}\label{sec:canny}
+			In diesem Abschnitt wird der Kantendetektor von Canny (aus \cite{canny}) kurz vorgestellt und anschließend mit dem SUSAN-Kantendetektor verglichen. Der Kantendetektor von Canny basiert auf dem Prinzip der Ableitung: Ziel ist es, die Stellen der größten Änderung zu markieren. In der stetigen Analysis sind diese Stellen die Nullstellen der zweiten Ableitung. Da wir allerdings keine stetige Funktion vorliegen haben, sondern lediglich ein digitales Bild, müssen wir eine Approximation finden.
 
-			Zunächst aber wird das Bild geglättet, meist durch einen Gausschen Weichzeichner, wie er bereits in [x] besprochen wurde.
+			Zunächst aber wird das Bild geglättet, meist durch einen Gausschen Weichzeichner, wie er bereits in Kapitel \ref{sec:imageproc} besprochen wurde.
 
 			Unter den Begriff Sobel-Operator fallen Filtermasken, die eine Approximation der ersten Ableitung in eine Richtung berechnen und orthogonal dazu das Bild glätten.
 
@@ -857,11 +893,7 @@
 				\label{fig:canny_no_corners}
 			\end{figure}
 
-			In Abbildung \ref{fig:canny_no_corners} ist dieser Unterschied gut zu erkennen.
-			
-
-		\section{Heuristik}
-			\subsection{Erklärung des SUSAN-Prinzips}
+		\section{Heuristik}\label{sec:heuristic}
 			 	Durch die folgende Heuristik aus \cite{SUSAN} soll dargestellt werden, wie das Prinzip des SUSAN-Kantendetektors funktioniert. Die Heuristik ist nicht als Beweis zu verstehen, da für diese Heuristik Annahmen getroffen werden, die nicht auf Digitalbilder zutreffen.
 
 			 	Angenommen wir haben ein eindimensionales Bild. Unser Ziel ist es, genau die Stellen zu markieren, die den größten Grauwertunterschied zu ihrer Nachbarschaft haben. Das klassische Werkzeug der Analysis, um genau diese Stellen zu identifizieren, ist die Ableitung. Leiten wir eine zweimal differenzierbare, stetige Funktion $I$ zweimal ab, so erhalten wir eine Funktion $I''$, dessen Nullstellen die Stellen des größten Unterschieds in $I$ repräsentieren.
@@ -977,11 +1009,19 @@
 				Durch das SUSAN-Prinzip und die Non-Maximum-Suppression konnten wir die Kante ohne Ableitung bestimmen.
 
 		\chapter{Diskussion}
-			Der SUSAN-Kantendetektor findet Kanten auf digitalen Bildern pixelgenau, wie wir an mehreren Beispielen erkennen konnten. 
+			Der SUSAN-Kantendetektor findet Kanten auf digitalen Bildern einfach, schnell und pixelgenau, wie wir an mehreren Beispielen erkennen konnten. Im Gegensatz zum Kantendetektor von Canny eignet sich SUSAN auch zur Identifikation von Ecken.
+
+			Meine persönliche Implementation könnte trotz Einbindung von \texttt{multiprocessing} noch schneller sein, dazu würden sich einerseits GPU-gestützte Methoden sowie auch eine Implementation in einer weniger dynamischen Sprache wie zum Beispiel \texttt{C++} anbieten (siehe \cite{pyslow}). Die Implementation in Python 3 bietet aber den großen Vorteil der Modifizierbarkeit, was einerseits die Fehlersuche und andererseits das Experimentieren mit verschiedenen Maskenträgern und Randbedingungen erleichtert. Im Sinne einer Bachelorarbeit, welche nicht notwendigerweise einen industriellen Nutzen tragen muss, bewerte ich die Wahl der Sprache aus diesem Grund als gelungen.
+
+			Der Kantendetektor von Canny hingegen ist durch die Vektorisierbarkeit der Faltung in Python 3 mit kürzeren Laufzeiten zu realisieren. Dadurch fielen nämlich zahlreiche \texttt{for}-Schleifen weg, welche aufgrund vorher genannter dynamischer Natur von Python 3 der Flaschenhals meiner Implementation des SUSAN-Kantendetektors sind.
+
+			Der Kantendetektor von Canny basiert auf dem Prinzip der Diskretisierung der Ableitung, wohingegen der SUSAN-Kantedetektor auf einem kombinatorischen Prinzip basiert, welches in \cite{SUSAN} nur über eine Analogie mit der eindimensionalen Analysis erklärt wurde, ähnlich, wie in Kapitel \ref{sec:heuristic}. Das Fehlen der mathematischen Gründlichkeit für eine Herleitung des SUSAN-Kantendetektors steht einer vergleichsweise einfachen Strategie des Zählens der ähnlichen Nachbarn gegenüber.
+\thispagestyle{headings}
+\pagebreak
+\pagestyle{plain}
 
 
 \begin{thebibliography}{56}
-
 \bibitem{SUSAN}
 	Stephen M. Smith, J. Michael Brady,\\
 	\textit{SUSAN - A New Approach to Low Level Image Processing},\\
@@ -1025,6 +1065,13 @@
 	vectorization-and-parallelization-in-python-with-numpy-and-pandas/},\\
 	2018
 
+\bibitem{canny}
+	John Canny,\\
+	\emph{Finding lines and edges in images},\\
+	Technical Report TM-720,\\
+	Artificial Intelligence Laboratory, Massachusetts Institute of Technology,\\
+	1983
+
 \bibitem{mysoftware}
 	Julian Lüken,\\
 	Implementation des SUSAN Kantendetektors in Python 3,\\
@@ -1032,8 +1079,13 @@
 	2019
 
 \end{thebibliography}
-			
+\pagebreak
 
+
+\pagestyle{plain}
+\appendix
+\chapter{Quellcode}
+\lstinputlisting[basicstyle=\tiny\ttfamily, frame=single,label=Susan.py, breaklines=true, postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}]{../python/Susan.py}
 
 % zu den quellen:
 %
