@@ -1016,7 +1016,6 @@ Göttingen, den \today \hspace{2em}
 			Der Kantendetektor von Canny hingegen ist durch die Vektorisierbarkeit der Faltung in Python 3 mit kürzeren Laufzeiten zu realisieren. Dadurch fielen nämlich zahlreiche \texttt{for}-Schleifen weg, welche aufgrund vorher genannter dynamischer Natur von Python 3 der Flaschenhals meiner Implementation des SUSAN-Kantendetektors sind.
 
 			Der Kantendetektor von Canny basiert auf dem Prinzip der Diskretisierung der Ableitung, wohingegen der SUSAN-Kantedetektor auf einem kombinatorischen Prinzip basiert, welches in \cite{SUSAN} nur über eine Analogie mit der eindimensionalen Analysis erklärt wurde, ähnlich, wie in Kapitel \ref{sec:heuristic}. Das Fehlen der mathematischen Gründlichkeit für eine Herleitung des SUSAN-Kantendetektors steht einer vergleichsweise einfachen Strategie des Zählens der ähnlichen Nachbarn gegenüber.
-\thispagestyle{headings}
 \pagebreak
 \pagestyle{plain}
 
@@ -1082,7 +1081,7 @@ Göttingen, den \today \hspace{2em}
 \pagebreak
 
 
-\pagestyle{plain}
+\pagestyle{headings}
 \appendix
 \chapter{Quellcode}
 \lstinputlisting[basicstyle=\tiny\ttfamily, frame=single,label=Susan.py, breaklines=true, postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}]{../python/Susan.py}
