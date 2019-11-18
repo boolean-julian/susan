@@ -907,32 +907,41 @@ Göttingen, den \today \hspace{2em}
 			 		\label{fig:susan-graph}
 			 	\end{figure}
 
-				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$ eine untere Grenze $x_0+a(x_0)$ und eine obere Grenze $x_0-b(x_0)$ der USAN.
+				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$ eine obere Grenze $x_0+a(x_0)$ und eine untere Grenze $x_0-b(x_0)$ der USAN. In der Abbildung \ref{fig:susan-graph} ist an drei verschiedenen Stellen dargestellt, wie das Fenster für verschiedene $x_0$ variieren kann. Dies ist in Abbildung \ref{fig:susan-graph} für $x_0$ am mittleren Kreuz der Fall.
 				Dann gilt an den Grenzen:
 				\begin{align*}
 					I(x_0 + a(x_0)) &= I(x_0) + t \\
 					I(x_0 - b(x_0)) &= I(x_0) - t.
 				\end{align*}
-				Das Prinzip des SUSAN-Kantendetektors lässt sich folgendermaßen formulieren: An genau den Stellen, an denen $n(x_0) = a(x_0) + b(x_0)$ ein Minimum hat, ist die Antwort $A(x_0) > 0$. Wir erhalten unter der Annahme, dass $n$ an $x_0$ ein lokales Minimum erreicht:
+				Hier gehen wir von der Darstellung in Abbildung \ref{fig:susan-graph} aus. Falls die Intensitätsfunktion $I$ fallend ist, sind die Formeln entsprechend zu ändern.
+				Das Prinzip des SUSAN-Kantendetektors lässt sich folgendermaßen formulieren: An genau den Stellen, an denen $n(x_0) := a(x_0) + b(x_0)$ ein Minimum hat, das heißt wenn die Fensterbreite am kleinsten ist, ist die Antwort $A(x_0) > 0$. Wir erhalten unter der Annahme, dass $n$ an $x_0$ ein lokales Minimum erreicht:
 				$$ n'(x_0) = a'(x_0) + b'(x_0) = 0 $$
 				Die obigen Gleichungen können wir nach $a$ und $b$ umstellen. So erhalten wir
 				\begin{align*}
-					a(x_0) = x_0 - x(I(x_0) + t) \\
-					b(x_0) = x(I(x_0) - t) - x_0,
+					a(x_0) = x(I(x_0) + t) - x_0 \\
+					b(x_0) = x_0 - x(I(x_0) - t),
 				\end{align*}
 				wobei $x$ die Umkehrfunktion von $I$ ist.
 				Damit ist $n(x_0) = x(I(x_0) + t) - x(I(x_0) - t)$ und daraus folgt
 				$$ n'(x_0) = x'(I(x_0) + t) \cdot I'(x_0) - x'(I(x_0) - t) \cdot I'(x_0) = 0,$$
 				anders formuliert,
 				$$ x'(I(x_0) + t) \cdot I'(x_0) = x'(I(x_0) - t) \cdot I'(x_0) $$
-				und damit $$x'(I(x_0) + t) = x'(I(x_0) - t),$$
-				falls die Bildfunktion nicht konstant ist.
-	 			Es folgt 
-	 			$$(I(x_0) + t)' = (I(x_0) - t)'.$$
-	 			Lassen wir $t$ gegen Null laufen, so finden wir
-	 			$$\lim_{t\to 0}\; (I(x_0) + t)' - (I(x_0) - t)' = I''(x_0) = 0. $$
-
-	 			Demnach treffen sich die maximale Antwort des SUSAN-Kantendetektors und die zweite Ableitung der Bildfunktion. Tatsächlich verwendet der SUSAN-Kantendetektor allerdings keine Ableitungen. Der SUSAN-Algorithmus bestimmt lediglich die Anzahl der ähnlichen Pixel in einer Umgebung.
+				und damit
+				$$
+					x'(I(x_0) + t) = x'(I(x_0) - t) \quad \iff \quad x'(I(x_0 + a(x_0))) = x'(I(x_0 - b(x_0))),
+				$$
+				falls $I'(x_0) \neq 0$, das heißt falls die Bildfunktion $I$ nicht konstant ist.
+	 			Aus der Inversenregel der Differenzialrechnung erhalten wir
+	 			\begin{align*}
+	 				x'(I(x_0 + a(x_0))) &= \frac{1}{I'(x_0 + a(x_0)),}\\
+	 				x'(I(x_0 - b(x_0))) &= \frac{1}{I'(x_0 - b(x_0)),}
+	 			\end{align*}
+	 			und dadurch
+	 			$$ I'(x_0 + a(x_0)) = I'(x_0 - b(x_0)), $$
+	 			falls $I'(x_0 + a(x_0)) \neq 0$.
+	 			Folglich ist die Approximation der zweiten Ableitung
+	 			$$I''(x_0) \approx \frac{I'(x_0 + a(x_0)) - I'(x_0 - b(x_0))}{a(x_0) + b(x_0)} = 0$$
+	 			Also ist die Antwort des SUSAN-Kantendetektors in $x_0$ maximal, wenn die zweite Ableitung der Bildfunktion $I''(x_0) = 0$ ist. Tatsächlich verwendet der SUSAN-Kantendetektor allerdings keine Ableitungen, sondern diskrete Werte. Der SUSAN-Algorithmus bestimmt lediglich die Anzahl der ähnlichen Pixel in einer Umgebung.
 
 				\begin{figure}[H]
 					\begin{center}
