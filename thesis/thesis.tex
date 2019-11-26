@@ -447,7 +447,7 @@ Göttingen, den \today \hspace{2em}
 
 		\subsection{Non-Maximum-Suppression I}\label{ssec:nonmax}
 			Das oben genannte Prinzip aus Abschnitt \ref{ssec:susan_principle} findet Kanten innerhalb von Bildern, aber die Lokalisation der Kanten könnte besser sein, wie wir in der Abbildung \ref{fig:susan_principle} bereits erkennen konnten. Im Bereich der eigentlichen Kante stellen wir fest, dass die Antwort $A$ ungleich $0$ ist. Um die Kante genauer zu lokalisieren, verwenden wir das Prinzip der Non-Maximum-Suppression, bei der nur die maximale Antwort entlang einer Kante erhalten bleibt. Anders formuliert möchte man die lokal kleinsten USAN finden, daher auch der Name SUSAN (\emph{smallest univalue segment assimilating nucleus}).
-			Zu diesem Zweck berechnen wir die Kantenrichtung an jedem Pixel $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Das scheint im ersten Moment fragwürdig, da Pixel an sich keine Richtung haben, sondern die Kanten. Viel mehr ist die Richtung der Kante an der Stelle des jeweiligen Pixel gemeint. Der Einfachheit halber behalten wir uns trotzdem den Begriff der Richtung des Pixels vor. Wir unterscheiden dabei verschiedene Arten von Kanten.
+			Zu diesem Zweck berechnen wir die Kantenrichtung an jedem Pixel $r_0 = (x_0, y_0)$, für welches $A(x_0, y_0) \neq 0$ gilt, durch eine Fallunterscheidung. Das scheint im ersten Moment fragwürdig, da Pixel an sich keine Richtung haben, sondern die Kanten. Viel mehr ist die Richtung der Kante an der Stelle des jeweiligen Pixels gemeint. Der Einfachheit halber behalten wir uns trotzdem den Begriff der Richtung des Pixels vor. Wir unterscheiden dabei verschiedene Arten von Kanten.
 
 			\begin{figure}[H]
 				\begin{center}
@@ -519,7 +519,7 @@ Göttingen, den \today \hspace{2em}
 
 					\end{minipage}
 
-					\caption{Inter-Pixel-Fall und Intra-Pixel-Fall für die $3\times 3$ Maske: Die drei rechts abgebildeten USAN wurden durch Wahl des Nukleus an den mit A, B und C markierten Stellen im Eingangsbild ausgewertet. Die grün markierten Pixel stehen für Teile der USAN. Die Nuklei D und E gelten nur der weiteren Illustration von Möglichkeiten und sind nicht im Eingangsbild vorzufinden.}
+					\caption{Inter-Pixel-Fall und Intra-Pixel-Fall für die $3\times 3$ Maske: Die drei rechts abgebildeten USAN wurden durch Wahl des Nukleus an den mit A, B und C markierten Stellen im Eingangsbild ausgewertet. Die grün markierten Pixel stehen für Teile der USAN, die rot markierten Pixel liegen außerhalb. Die Nuklei D und E gelten nur der weiteren Illustration von Möglichkeiten und sind nicht im Eingangsbild vorzufinden.}
 					\label{fig:inter-intra}
 				\end{center}
 			\end{figure}
@@ -527,7 +527,7 @@ Göttingen, den \today \hspace{2em}
 
 			Für die Fallunterscheidung zwischen den Pixeln benötigen wir das sogenannte \emph{center of gravity} oder Gravitationszentrum einer jeden USAN:
 				$$ \text{COG}(r_0) := \frac	{\sum_r r\,c(r,r_0)} {\sum_r c(r,r_0)} = \frac	{\sum_r r\,c(r,r_0)} {n(r_0)} \in \mathbb{R}^2.$$
-			Das $\text{COG}(r_0)$ ist die gewichtete Summe der durch $c \in \{c_t, c_{t,exp}\}$ bedingt ähnlichen Pixel; also in Relation zu $r_0$ die Richtung, in der die meisten ähnlichen Pixel in der Maske sind.
+			Das $\text{COG}(r_0)$ ist die gewichtete Summe der durch $c \in \{c_t, c_{t,exp}\}$ bedingt ähnlichen Pixel; also diejenige Richtung in Relation zu $r_0$, in der die meisten ähnlichen Pixel in der Maske sind.
 			Wir betrachten zum Beispiel die Abbildung \ref{fig:inter-intra} mit der $3\times3$ Maske, $c = c_t$ und unter der Annahme, dass $A := (5,2)$. In der Abbildung \ref{fig:inter-intra} stehen die grün markierten Pixel jeweils für Pixel, die in der USAN liegen. Die roten Pixel liegen außerhalb der USAN. Die Mitte ist der Nukleus der Maske. Es gilt:
 			\begin{align*}
 				\text{COG}(\text{A})
@@ -541,13 +541,13 @@ Göttingen, den \today \hspace{2em}
 			Der gesuchte Vektor soll nun senkrecht auf $\text{COG}(\text{A}) - \text{A}$ stehen und damit die Richtung der Kante beschreiben. Es gilt:
 			$$\begin{bmatrix}\text{COG}_y(\text{A}) - \text{A}_y \\ \text{COG}_x(\text{A}) - \text{A}_x\end{bmatrix} \bot \; \left(\text{COG}(\text{A}) - \text{A}\right).$$
 
-			Wir beobachten allerdings für das Pixel C in der Abbildung \ref{fig:inter-intra} und den gleichen Bedingungen wie bei der vorherigen Berechnung, dass $\text{COG}(\text{C}) = \text{C}$. Da keine Distanz zwischen $\text{COG}(\text{C})$ und C ist, kann die Richtung der Kante mit dem oben genannten Verfahren nicht ermittelt werden. Bei kleineren Distanzen zwischen einem Pixel $r$ und seinem $\text{COG}(r)$ wird das Verfahren zunehmend ungenau. Stattdessen nutzen wir eine Art Stichprobenvarianz in $x$- und $y$-Richtung folgendermaßen: Summiere für alle Pixel in der Maske $r = (x, y)$ und den Nukleus $r_0 = (x_0, y_0)$ für $c \in \{c_t, c_{t,exp}\}$
+			Wir beobachten allerdings für das Pixel C in der Abbildung \ref{fig:inter-intra} und den gleichen Bedingungen wie bei der vorherigen Berechnung, dass $\text{COG}(\text{C}) = \text{C}$. Da keine Distanz zwischen $\text{COG}(\text{C})$ und C ist, kann die Richtung der Kante mit dem oben beschriebenem Verfahren nicht ermittelt werden. Bei kleineren Distanzen zwischen einem Pixel $r$ und seinem $\text{COG}(r)$ wird das Verfahren zunehmend ungenau. Stattdessen nutzen wir eine Art Stichprobenvarianz in $x$- und $y$-Richtung folgendermaßen: Summiere für alle Pixel in der Maske $r = (x, y)$ und den Nukleus $r_0 = (x_0, y_0)$ für $c \in \{c_t, c_{t,exp}\}$
 			\begin{align*}
 				Var_{x}(r_0) &:= \frac{1}{N}\sum_{r=(x,y)} (x-x_0)^2 \, c(r,r_0), \\
 				Var_{y}(r_0) &:= \frac{1}{N}\sum_{r=(x,y)} (y-y_0)^2 \, c(r,r_0),
  			\end{align*}
  			wobei $N$ die Anzahl der Pixel ist, über die iteriert wird.
- 			Die Varianz ist ein Maß dafür, wie weit die Pixel, die in der USAN liegen, durchschnittlich vom "Mittelwert" (in diesem Fall dem Nukleus $r_0$) in $x$- beziehungsweise $y$-Richtung abweichen. Im Falle des Pixels $\text{C} = (3,5)$ mit der $3\times3$ Maske und der $c = c_t$ sind die Varianzen gegeben durch
+ 			Die Varianz ist ein Maß dafür, wie weit die Pixel, die in der USAN liegen, durchschnittlich vom \glqq Mittelwert\grqq{} (in diesem Fall dem Nukleus $r_0$) in $x$- beziehungsweise $y$-Richtung abweichen. Im Falle des Pixels $\text{C} = (3,5)$ mit der $3\times3$ Maske und der $c = c_t$ sind die Varianzen gegeben durch
  			\begin{align*}
  				N \; Var_x(\text{C}) 	=\; &(2-3)^2 \cdot 0 \;+\; (3-3)^2 \cdot 1 \;+\; (4-3)^2 \cdot 0  \\
  										+\; &(2-3)^2 \cdot 0 \;+\; (3-3)^2 \cdot 1 \;+\; (4-3)^2 \cdot 0  \\
@@ -558,7 +558,7 @@ Göttingen, den \today \hspace{2em}
  										+\; &(6-5)^2 \cdot 0 \;+\; (6-5)^2 \cdot 1 \;+\; (6-5)^2 \cdot 0  = 2. \\& 
  			\end{align*}
  			
- 			Wie im ersten Fall können wir nun die Richtung des Vektors $\frac{Var_x(\text{C})}{Var_y(\text{C})}$ bestimmen. Der normierende Faktor $N$ der Stichprobenvarianz fällt dabei weg. Angenommen eine diagonale Kante liegt vor.
+ 			Wie im ersten Fall können wir nun die Richtung des Vektors $\frac{Var_x(\text{C})}{Var_y(\text{C})}$ bestimmen. Der normierende Faktor $N$ der Stichprobenvarianz fällt dabei weg. Angenommen eine diagonale Kante liegt vor, wie in \ref{fig:inter-intra} in den Fällen D und E.
  			Dann sehen wir, dass $Var_x(r_0) \approx Var_y(r_0)$. Ob eine \glqq positiv diagonale\grqq{} oder \glqq negativ diagonale\grqq{} Kante vorliegt (also eine von links unten nach rechts oben oder eine von rechts unten nach links oben), entscheidet nun ein Vorzeichen, welches wir aufgrund von $Var_x > 0$ und $Var_y > 0$ nicht haben.
  			Das Vorzeichen können wir allerdings mithilfe folgender Gleichung berechnen:
  			$$ Var_{x,y}(r_0) = \sum_{r=(x,y)} (x-x_0) \, (y-y_0) \, c_t(r,r_0).$$
@@ -654,7 +654,6 @@ Göttingen, den \today \hspace{2em}
 			\end{figure}
 
 			Die Richtung muss nur für diejenigen Pixel $(i,j)$ bestimmt werden, für die $A(i,j) > 0$ gilt. Ist die Richtung der Kante bestimmt, so können wir die lokalen Maxima von $A$ entlang der Richtung, die senkrecht zur Kantenrichtung steht, erhalten. Alles, was kein lokales Maximum entlang dieser Richtung ist, wird verworfen (also wird die Antwort an dieser Stelle $= 0$ gesetzt). Wir erhalten so ein neues Bild. In Sektion \ref{ssec:nonmax_implem} wird darauf eingegangen, wie genau dieser Prozess implementiert wurde.
-			
 			Die dort vorgestellte Prozedur kategorisiert jedes Pixel nach der generellen Richtung jeder Kante mit $\frac{\pi}{4}$ Genauigkeit. Senkrecht zu dieser Richtung wird dann nur das Maximum der direkten Nachbarschaft erhalten, der Rest wird aus dem Kantenbild entfernt (also $=0$ gesetzt).
 
 			\begin{figure}[H]\centering
@@ -662,7 +661,7 @@ Göttingen, den \today \hspace{2em}
 				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_raw.png}\quad
 				\includegraphics[width=.3\textwidth]{../examples/lena/15_out_nonmax_supp.png}
 
-				\caption{Wie Abbildung \ref{fig:lena_first_test}. Links das Bild mit den Kantenrichtungen (Skala wie in Abbildung \ref{fig:directions_test}). In der Mitte das Bild nach dem prinzipiellen SUSAN-Schritt. Das Bild rechts ist nach der Non-Maximum-Suppression.}
+				\caption{Eingangsbild wie in Abbildung \ref{fig:lena_first_test}. Links das Bild mit den Kantenrichtungen (Skala wie in Abbildung \ref{fig:directions_test}). In der Mitte das Bild nach dem prinzipiellen USAN-Schritt. Das Bild rechts ist nach der Non-Maximum-Suppression.}
 				\label{fig:lena_nonmax_supp}
 			\end{figure}
 
@@ -671,16 +670,16 @@ Göttingen, den \today \hspace{2em}
 
 		\subsection{Ausdünnen}\label{ssec:thinout}
 			Da viele digitale Bilder eingangs mit Rauschen behaftet sind, ist es manchmal hilfreich, einzelne Antworten zu entfernen und dafür andere hinzuzufügen. Zu diesem Zwecke empfiehlt \cite{SUSAN}, dass man einige der Kanten ausdünnt. Dieser Vorgang wird genauer in \cite{thinout} beschrieben.
-			Es wird erneut über das ganze Bild iteriert. Jedes Pixel $(i,j)$ mit einer Antwort $A(i,j) > 0$ wird auf die Anzahl seiner direkten Nachbarn mit $A(x,y) > 0$ überprüft. Als direkte Nachbarschaft werden die acht nächsten Pixel bezeichnet, siehe dazu die $3\times 3$ Maske in Abbildung \ref{fig:def_masken}. Angenommen, das Pixel hat
+			Es wird erneut über das ganze Bild iteriert. Jedes Pixel $r_0$ mit einer Antwort $A(r_0) > 0$ wird auf die Anzahl seiner direkten Nachbarn mit $A(r) > 0$ überprüft. Als direkte Nachbarschaft werden die acht räumlich nächsten Pixel bezeichnet, siehe dazu die $3\times 3$ Maske in Abbildung \ref{fig:def_masken}. Angenommen, das Pixel hat
 			\begin{itemize}
-				\item \textbf{0 Nachbarn:}
-					Entferne die Antwort des Pixels.
-				\item \textbf{1 Nachbar:}
+				\item Genau 0 Nachbarn mit $A(r) > 0$:
+					Setze die Antwort des Pixels gleich 0.
+				\item Genau 1 Nachbar mit $A(r) > 0$:
 					Überprüfe, ob in einer Reichweite von 3 Pixeln eine Linie mit der gleichen Richtung existiert. Falls ja, verbinde die Pixel miteinander.
-				\item \textbf{2 Nachbarn:}
+				\item Genau 2 Nachbarn mit $A(r) > 0$:
 					Falls das Pixel benachbart zu einer diagonalen Linie ist, entferne es.
 					Falls das Pixel außerhalb einer sonst horizontalen oder vertikalen Linie liegt, verschiebe die Antwort des Pixels in die Lücke der vertikalen oder horizontalen Linie.
-				\item \textbf{3 Nachbarn:}
+				\item Genau 3 Nachbarn mit $A(r) > 0$:
 					Falls die drei Nachbarn in einer Linie liegen, entferne die Antwort des Pixels.
 			\end{itemize}
 
@@ -698,11 +697,11 @@ Göttingen, den \today \hspace{2em}
 				\label{fig:thinout_test}
 			\end{figure}
 
-			Laut der zitierten Quelle \cite{thinout} soll eigentlich auch für die Fälle mit mehr als 3 Nachbarn gesorgt werden. Allerdings ist eine Vorhersage über Nachbarschaften mit 4 oder mehr Nachbarn relativ schwierig. Es müssten mehrere Nachbarn zur genauen Beurteilung der jeweiligen Situation herangezogen werden.
-			Der Ausdünnungsschritt wird in \cite{SUSAN} als optional bezeichnet und seine Wirkung ist fragwürdig und nicht belegt. Es besteht gerade bei feinen Strukturen mit vielen, nah beieinanderliegenden Kanten die Möglichkeit, dass der Schritt richtig identifizierte Stellen einer Kante aus der Antwort unterdrückt und im Gegenzug Kanten verbindet, die nicht verbunden sind.
+			Laut der zitierten Quelle \cite{thinout} soll eigentlich auch für die Fälle mit mehr als 3 Nachbarn die Antwort ausgedünnt werden. Allerdings ist eine Vorhersage über Nachbarschaften mit 4 oder mehr Nachbarn relativ schwierig. Es müssten mehrere Nachbarn zur genauen Beurteilung der jeweiligen Situation herangezogen werden.
+			Der Ausdünnungsschritt wird in \cite{SUSAN} als optional bezeichnet und seine Wirksamkeit ist fragwürdig und nicht belegt. Es besteht gerade bei feinen Strukturen mit vielen nah beieinanderliegenden Kanten die Möglichkeit, dass der Schritt richtig identifizierte Stellen einer Kante aus der Antwort unterdrückt und im Gegenzug Kanten verbindet, die nicht verbunden sind.
 
 		\subsection{Der SUSAN-Eckendetektor}\label{ssec:corner_detector}
-			In \cite{SUSAN} wird zusätzlich ein Verfahren beschrieben, mit welchem sich durch das SUSAN-Prinzip Ecken finden lassen. Dieser Eckendetektor basiert darauf, dass der SUSAN-Kantendetektor an Ecken stärkere Antworten liefert als an Kanten (siehe auch Abbildung \ref{fig:susan_principle_corners}).
+			In \cite{SUSAN} wird zusätzlich ein Verfahren beschrieben, mit welchem sich durch das USAN-Prinzip Ecken finden lassen. Dieser Eckendetektor basiert darauf, dass der SUSAN-Kantendetektor an Ecken stärkere Antworten liefert als an Kanten (siehe auch Abbildung \ref{fig:susan_principle_corners}).
 			Wir erinnern uns an den Algorithmus aus Sektion \ref{ssec:susan_principle}:
 			$$
 				A(r_0) = \text{max}\{0, g - n(r_0)\},\;
@@ -713,9 +712,9 @@ Göttingen, den \today \hspace{2em}
 						0 	& \text{sonst.}
 					\end{cases}
 			$$
-			Um nur vergleichsweise starke Antworten zu erhalten, benutzen wir statt dem bisherigen geometrischen Schwellenwert $g$ einen niedrigeren Wert. Im Beispiel in Abbildung \ref{fig:corner_test} wurde ein Wert von $\frac{1}{4}$ der Maskengröße verwendet.
+			Um nur vergleichsweise starke Antworten zu erhalten, benutzen wir statt des bisherigen geometrischen Schwellenwertes $g$ einen niedrigeren Wert. Im Beispiel in Abbildung \ref{fig:corner_test} wurde ein Wert von $\frac{1}{4}$ der Maskengröße verwendet.
 
-			Danach finden sich immer noch viele falsch positive Antworten. Um diese zu vermeiden, überprüft man, ob die jeweiligen Kandidaten mit einer Kante zusammenhängen. Dies gelingt durch das Erzwingen folgender Regeln für jede Ecke:
+			Nach diesem Schritt finden sich immer noch viele falsch positive Antworten. Um diese zu vermeiden, überprüft man, ob die jeweiligen Kandidaten mit einer Kante zusammenhängen. Dies gelingt durch das Erzwingen folgender Regeln für jede Ecke:
 
 			\begin{enumerate}
 				\item Die Entfernung zwischen Gravitationszentrum und Nukleus muss groß genug sein.
@@ -739,7 +738,7 @@ Göttingen, den \today \hspace{2em}
 			\item \texttt{numpy}, eine Bibliothek für wissenschaftliches Rechnen \cite{numpy},
 			\item \texttt{multiprocessing} eine Bibiliothek für prozessbasierte Parallelisierung \cite{multiprocessing}.
 		\end{itemize}
-		Die Software ist verfügbar unter \cite{mysoftware}. In der Klasse \texttt{Susan.py} befindet sich der vollständige Kantendetektor. Er lässt sich in Python 3 per Anweisung \texttt{import Susan} nutzen. Dazu erzeugt man ein Objekt der \texttt{Susan}-Klasse und übergibt eine Bilddatei. Danach ruft man auf dem Objekt die Funktion \texttt{detect\_edges\_mp} mit dem Parameter $t$, dem Grenzwert aus Abschnitt \ref{ssec:susan_principle}, auf.
+		Die Software ist verfügbar unter \cite{mysoftware}, kann aber auch im Anhang dieser Arbeit gefunden werden. In der Klasse \texttt{Susan.py} befindet sich der vollständige Kantendetektor. Er lässt sich in Python 3 per Anweisung \texttt{import Susan} nutzen. Dazu erzeugt man ein Objekt der \texttt{Susan}-Klasse und übergibt eine Bilddatei. Danach ruft man auf dem Objekt die Funktion \texttt{detect\_edges\_mp} mit dem Parameter $t$, dem Grenzwert aus Abschnitt \ref{ssec:susan_principle}, auf.
 
 		\begin{figure}[H] \centering
 			\begin{lstlisting}[language=Python]
@@ -803,17 +802,17 @@ Göttingen, den \today \hspace{2em}
 					\hline
 					\textbf{Bedingung}					&								& \textbf{Kategorie}			& \textbf{Adjazente $C$} 	&	\\
 					\hline
-														&$D(i,j) \leq -\frac{3}{8}\pi$ 	& negativ diagonal 				&$\{(i+1, j-1)$, 		&$(i-1, j+1)\}$\\
+					$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& negativ diagonal				&$\{(i-1, j-1)$, 		&$(i+1, j+1)\}$\\
 					\hline
-					$D(i,j) > -\frac{3}{8}\pi$, 		&$D(i,j) \leq -\frac{1}{8}\pi$ 	& horizontal 					&$\{(i-1, j)$, 			&$(i+1, j)\}$\\
+					$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& vertikal 						&$\{(i-1, j)$, 			&$(i+1, j)\}$\\
 					\hline
-					$D(i,j) > -\frac{1}{8}\pi$, 		&$D(i,j) \leq \frac{1}{8}\pi$ 	& positiv diagonal 				&$\{(i+1, j+1)$, 		&$(i-1, j-1)\}$\\
+					$D(i,j) > \frac{1}{8}\pi$			&$D(i,j) \leq \frac{3}{8}\pi$	& positiv diagonal				&$\{(i-1, j+1)$, 		&$(i+1, j-1)\}$\\
 					\hline
-					$D(i,j) > -\frac{3}{8}\pi$			&								& vertikal						&$\{(i, j-1)$, 			&$(i, j+1)\}$\\
+					sonst								&							 	& horizontal 					&$\{(i, j-1)$, 			&$(i, j+1)\}$\\
 					\hline
 					\end{tabular}
 				\end{center}
-				Für jedes Pixel $(i,j)$ wird nun überprüft, ob $(i,j) = \text{max}(C \cup \{(i,j)\})$ gilt. Gilt es nicht, so wird $A(i,j)$ unterdrückt.
+				Für jedes Pixel $(i,j)$ wird nun überprüft, ob $A(i,j) = \text{max}\{A(r) : r \in \{(i,j)\} \cup C\}$ gilt. Gilt es nicht, so wird $A(i,j) = 0$ gesetzt.
 				
 			\subsection{Parallelisierung}
 				Das SUSAN-Prinzip sieht vor, die Antwort $A(i,j)$ und die Kantenrichtung $D(i,j)$ immer nur mithilfe von Pixeln aus der Maske an der Stelle $(i,j)$ zu berechnen. An dieser Stelle kann die Berechnung von $A$ und $D$ parallelisiert werden. In meiner Implementation liefert das Paket \texttt{multiprocessing} die nötigen Werkzeuge, um die vorhandenen Ressourcen zusammenzuschließen und die Berechnung von $A$ und $D$ parallel abzuarbeiten.
@@ -823,7 +822,7 @@ Göttingen, den \today \hspace{2em}
 				Unter der stark vereinfachten Annahme, dass alle Kerne gleich viele Fließkommazahloperationen pro Zeiteinheit abarbeiten können und gleichgroße Partitionen etwa gleichviel Rechenzeit benötigen, gelte folgende Aussage: Eine Partitionierung $\mathcal{S}$ für die gilt $\#\mathcal{S} = n+1$ ist genau dann optimal, wenn für alle Partitionen gilt
 				$$|\#(S_i, S_{i+1}]_\mathbb{Z} - \#(S_j, S_{j+1}]_\mathbb{Z}| \leq 1, \quad \forall i \neq j, \quad i,j \in \{1,2,...,n\}.$$
 
-				Angenommen der Computer, auf dem die Software läuft, besitzt $n$ Kerne, kann also $n$ Jobs $J_1,J_2,...,J_n$ gleichzeitig abarbeiten, und ein Bild der Höhe $H$ wird eingegeben. Sei $k := H \text{ mod } n$ und $z := \left\lfloor \frac{H}{n} \right\rfloor$. Dann ist die optimale Partitionierung $\mathcal{S}$ nach der Höhe gegeben durch:
+				Angenommen der Computer, auf dem die Software läuft, besitzt $n$ Kerne, kann also $n$ Jobs $J_1,J_2,...,J_n$ gleichzeitig abarbeiten, und ein Bild der Höhe $H$ wird eingegeben. Sei $k := H \text{ mod } n$ und $z := \left\lfloor \frac{H}{n} \right\rfloor$, dann ist die optimale Partitionierung $\mathcal{S}$ nach der Höhe gegeben durch:
 
 				\begin{align*}
 				S_1 	&= 					0		\\
@@ -844,12 +843,8 @@ Göttingen, den \today \hspace{2em}
 
 		\section{Vergleich mit dem Kantendetektor von Canny}\label{sec:canny}
 			In diesem Abschnitt wird der Kantendetektor von Canny (aus \cite{canny}) kurz vorgestellt und anschließend mit dem SUSAN-Kantendetektor verglichen. Der Kantendetektor von Canny basiert auf dem Prinzip der Ableitung: Ziel ist es, die Stellen der größten Änderung zu markieren. In der stetigen Analysis sind diese Stellen die Nullstellen der zweiten Ableitung. Da wir allerdings keine stetige Funktion vorliegen haben, sondern lediglich ein digitales Bild, müssen wir eine Approximation finden.
-
 			Zunächst aber wird das Bild geglättet, meist durch einen Gaußschen Weichzeichner, wie er bereits in Kapitel \ref{sec:imageproc} besprochen wurde.
-
-			Unter den Begriff Sobel-Operator fallen Filtermasken, die eine Approximation der ersten Ableitung in eine Richtung berechnen und orthogonal dazu das Bild glätten.
-
-			Mit den Sobel-Operatoren $S_x$ und $S_y$ lassen sich die geglätteten Approximationen der partiellen Ableitungen folgendermaßen berechnen
+			Mit den Sobel-Operatoren $S_x$ und $S_y$ lassen sich die geglätteten Approximationen der partiellen Ableitungen folgendermaßen berechnen. Dabei sind Sobel-Operatoren Filtermasken, die eine Approximation der ersten Ableitung in eine Richtung berechnen und orthogonal dazu das Bild glätten.
 			$$ g_x = S_x * I, \qquad g_y = S_y * I, $$
 			wobei 
 		 	$$ S_x = \begin{pmatrix}
@@ -877,16 +872,16 @@ Göttingen, den \today \hspace{2em}
 			\end{cases} $$
 			bestimmt.
 
-			Zum Vergleich mit meiner Implementation des SUSAN-Kantendetektors ziehen wir nun die OpenCV-Implementation des Canny-Kantendetektors heran. Durch die Vektorisierbarkeit der Teilschritte lässt sich über Cannys Kantendetektor sagen, dass die Implementation in Python 3 schnellere Laufzeiten mit sich bringt. Nichtlineare Operationen müssen in Python 3, wie in den meisten anderen Programmiersprachen, über Schleifen geregelt werden. Diese sind verglichen langsam zu beispielsweise der Programmiersprache C. Das liegt begründet im dynamischen Charakter von Python \cite{pyslow}.
+			Zum Vergleich mit meiner Implementation des SUSAN-Kantendetektors ziehen wir nun die OpenCV-Implementation des Canny-Kantendetektors heran. Durch die Vektorisierbarkeit der Teilschritte lässt sich über Cannys Kantendetektor sagen, dass die Python 3-Implementation schnellere Laufzeiten mit sich bringt als die Implementation des SUSAN-Kantendetektors. Nichtlineare Operationen (wie die Kantendetektion nach dem SUSAN-Prinzip) müssen in Python 3, wie in den meisten anderen Programmiersprachen, über Schleifen geregelt werden. Die Schleifen in Python sind im Vergleich zu beispielsweise den Schleifen in der Programmiersprache C eher langsam. Das liegt begründet im dynamischen Charakter von Python (siehe \cite{pyslow}).
 
 			Für lineare Probleme ist die Vektorisierung ein Weg, die Dynamik Pythons auszunutzen, um Ergebnisse schnell zu berechnen. Der nichtlineare Charakter des SUSAN-Detektors lässt allerdings nur einfache Parallelisierungen zu, keine Vektorisierung.
 
-			Allerdings bringt der SUSAN-Kantendetektor einen besonders großen Vorteil mit sich. Cannys Kantendetektor findet nämlich im Gegensatz zum SUSAN-Kantendetektor keine Ecken, wie auch bereits in \cite{SUSAN} beschrieben wurde.
+			Allerdings bringt der SUSAN-Kantendetektor einen besonders großen Vorteil mit sich. Der SUSAN-Kantendetektor findet, im Gegensatz zum Kantendetektor von Canny, Ecken auf Bildern, wie auch bereits in \cite{SUSAN} beschrieben wurde. In der Abbildung \ref{fig:canny_no_corners} wird dieser Unterschied deutlich.
 
 			\begin{figure}[H]\centering
 				\includegraphics[width=.45\textwidth]{../examples/original/original-canny.png}\quad
 				\includegraphics[width=.45\textwidth]{../examples/original/test_nonmax_supp.png}
-				\caption{Links: Canny, Rechts: SUSAN.}
+				\caption{Links: Canny. Rechts: SUSAN.}
 				\label{fig:canny_no_corners}
 			\end{figure}
 
@@ -900,18 +895,18 @@ Göttingen, den \today \hspace{2em}
 			 	\begin{figure}[H]
 			 		\centering
 			 		\includegraphics[width=.7\textwidth]{assets/susan-graph.png}
-			 		\caption{Das Bild $I$ (Bild entnommen aus \cite{SUSAN}). Das Kreuz steht für den Nukleus der USAN und die Kästen für die Maske.}
+			 		\caption{Bild entnommen aus \cite{SUSAN}. Eine stetige Funktion $I$, mithilfe welcher wir das SUSAN-Prinzip in 1D herleiten. Das Kreuz steht für den Nukleus $x_0$ der USAN und die sie umgebenden Kästen für die Maske. Die obere und untere Seite der Kästen steht dabei jeweils für den Schwellenwert $t$ und die weißen Bereiche innerhalb der Kästen stehen für den Bereich $[x_0 - b(x_0), x_0 + a(x_0)]$ von $I$, der noch unter $t$ liegt.}
 			 		\label{fig:susan-graph}
 			 	\end{figure}
 
-				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellenwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$, eine obere Grenze $x_0+a(x_0)$ und eine untere Grenze $x_0-b(x_0)$ der USAN. In der Abbildung \ref{fig:susan-graph} ist an drei verschiedenen Stellen dargestellt, wie das Fenster für verschiedene $x_0$ variieren kann. Dies ist in Abbildung \ref{fig:susan-graph} für $x_0$ am mittleren Kreuz der Fall.
+				Der SUSAN-Kantendetektor beruht auf folgendem Prinzip: Für einen Schwellenwert $t$ gibt es, abhängig von der spezifischen Stelle im Bild $x_0$, eine obere Grenze $x_0+a(x_0)$ und eine untere Grenze $x_0-b(x_0)$ der USAN. In der Abbildung \ref{fig:susan-graph} ist an drei verschiedenen Stellen dargestellt, wie die Maske für verschiedene $x_0$ variieren kann. Dies ist in Abbildung \ref{fig:susan-graph} für $x_0$ am mittleren Kreuz der Fall.
 				Dann gilt an den Grenzen:
 				\begin{align*}
-					I(x_0 + a(x_0)) &= I(x_0) + t \\
+					I(x_0 + a(x_0)) &= I(x_0) + t, \\
 					I(x_0 - b(x_0)) &= I(x_0) - t.
 				\end{align*}
 				Hier gehen wir von der Darstellung in Abbildung \ref{fig:susan-graph} aus. Falls die Intensitätsfunktion $I$ fallend ist, sind die Formeln entsprechend zu ändern.
-				Das Prinzip des SUSAN-Kantendetektors lässt sich folgendermaßen formulieren: An genau den Stellen, an denen $n(x_0) := a(x_0) + b(x_0)$ ein Minimum hat, das heißt wenn die Fensterbreite am kleinsten ist, ist die Antwort $A(x_0) > 0$. Wir erhalten unter der Annahme, dass $n$ an $x_0$ ein lokales Minimum erreicht:
+				Das Prinzip des SUSAN-Kantendetektors lässt sich folgendermaßen formulieren: An genau den Stellen, an denen $n(x_0) := a(x_0) + b(x_0)$ ein Minimum hat, das heißt, wenn die Maskenbreite am kleinsten ist, ist die Antwort $A(x_0) > 0$. Wir erhalten unter der Annahme, dass $n$ an $x_0$ ein lokales Minimum erreicht:
 				$$ n'(x_0) = a'(x_0) + b'(x_0) = 0. $$
 				Die obigen Gleichungen können wir nach $a$ und $b$ umstellen. So erhalten wir
 				\begin{align*}
@@ -952,7 +947,7 @@ Göttingen, den \today \hspace{2em}
 					\end{center}
 				\end{figure}
 
-	 			In einem eindimensionalen Digitalbild $P: [0,B-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}$ identifizeren wir durch eine Maske wie zum Beispiel in Abbildung \ref{fig:def_maske_1d} die USAN der einzelnen Pixel, wie auch schon im Algorithmus in \ref{sec:thealgorithm}. Dabei stellen wir für jede USAN fest, wie viele Pixel $r$ ähnlich zu dem Nukleus $r_0$ in der Mitte der Maske sind. Wir erinnern uns an die Definitionen aus dem Algorithmus
+	 			In einem eindimensionalen Digitalbild $P: [0,B-1]_\mathbb{Z} \to [0,255]_\mathbb{Z}$ identifizieren wir durch eine Maske, wie zum Beispiel in Abbildung \ref{fig:def_maske_1d}, die USAN der einzelnen Pixel, wie auch schon im Algorithmus in \ref{sec:thealgorithm}. Dabei stellen wir für jede USAN fest, wie viele Pixel $r$ ähnlich zu dem Nukleus $r_0$ in der Mitte der Maske sind. Wir erinnern uns an die Definitionen aus dem Algorithmus
 				$$
 				A(r_0) = \text{max}\{0, g - n(r_0)\},\;
 				n(r_0) = \sum_r c_t(r, r_0),\;
@@ -1012,21 +1007,55 @@ Göttingen, den \today \hspace{2em}
 						\label{fig:1d-ans}
 					\end{center}
 				\end{figure}
-				Durch das SUSAN-Prinzip und die Non-Maximum-Suppression konnten wir die Kante ohne Ableitung bestimmen.
+				Durch das SUSAN-Prinzip mit der Non-Maximum-Suppression konnten wir die Kante durch Zählen ähnlicher Nachbarn bestimmen.
 
 		\chapter{Diskussion}
-			Der SUSAN-Kantendetektor findet Kanten auf digitalen Bildern einfach, schnell und pixelgenau, wie wir an mehreren Beispielen erkennen konnten. Im Gegensatz zum Kantendetektor von Canny eignet sich SUSAN auch zur Identifikation von Ecken.
+			Der Kantendetektor von Canny basiert auf dem Prinzip der Diskretisierung der Ableitung, wohingegen der SUSAN-Kantendetektor auf einem kombinatorischen Prinzip basiert, welches in \cite{SUSAN} nur über eine Analogie mit der eindimensionalen Analysis erklärt wurde, ähnlich, wie in Kapitel \ref{sec:heuristic}. Das Fehlen der mathematischen Gründlichkeit für eine Herleitung des SUSAN-Kantendetektors steht einer vergleichsweise einfachen Strategie des Zählens der ähnlichen Nachbarn gegenüber.
 
 			Meine persönliche Implementation könnte trotz Einbindung von \texttt{multiprocessing} noch schneller sein, dazu würden sich einerseits GPU-gestützte Methoden sowie auch eine Implementation in einer weniger dynamischen Sprache wie zum Beispiel \texttt{C++} anbieten (siehe \cite{pyslow}). Die Implementation in Python 3 bietet aber den großen Vorteil der Modifizierbarkeit, was einerseits die Fehlersuche und andererseits das Experimentieren mit verschiedenen Maskenträgern und Randbedingungen erleichtert. Im Sinne einer Bachelorarbeit, welche nicht notwendigerweise einen industriellen Nutzen tragen muss, bewerte ich die Wahl der Sprache aus diesem Grund als gelungen.
 
-			Der Kantendetektor von Canny hingegen ist durch die Vektorisierbarkeit der Faltung in Python 3 mit kürzeren Laufzeiten zu realisieren. Dadurch fielen nämlich zahlreiche \texttt{for}-Schleifen weg, welche aufgrund vorher genannter dynamischer Natur von Python 3 der Flaschenhals meiner Implementation des SUSAN-Kantendetektors sind.
+			Der Kantendetektor von Canny hingegen ließe sich durch die Vektorisierbarkeit der Faltung in Python 3 mit kürzeren Laufzeiten realisieren. Dadurch fielen nämlich zahlreiche \texttt{for}-Schleifen weg, welche aufgrund vorher genannter dynamischer Natur von Python 3 der Flaschenhals meiner Implementation des SUSAN-Kantendetektors sind.
 
-			Der Kantendetektor von Canny basiert auf dem Prinzip der Diskretisierung der Ableitung, wohingegen der SUSAN-Kantedetektor auf einem kombinatorischen Prinzip basiert, welches in \cite{SUSAN} nur über eine Analogie mit der eindimensionalen Analysis erklärt wurde, ähnlich, wie in Kapitel \ref{sec:heuristic}. Das Fehlen der mathematischen Gründlichkeit für eine Herleitung des SUSAN-Kantendetektors steht einer vergleichsweise einfachen Strategie des Zählens der ähnlichen Nachbarn gegenüber.
+			Der SUSAN-Kantendetektor findet Kanten auf digitalen Bildern einfach, schnell und pixelgenau, wie wir an mehreren Beispielen erkennen konnten. Im Gegensatz zum Kantendetektor von Canny eignet sich SUSAN auch zur Identifikation von Ecken.
+
+
 \pagebreak
 \pagestyle{plain}
 
 
 \begin{thebibliography}{56}
+\bibitem{canny}
+	John Canny,\\
+	\emph{Finding lines and edges in images},\\
+	Technical Report TM-720,\\
+	Artificial Intelligence Laboratory, Massachusetts Institute of Technology,\\
+	1983
+
+\bibitem{gaussianblur}
+	Robert Fisher, Simon Perkins, Ashley Walker, Erik Wolfart,\\
+	\textit{Gaussian Smoothing},\\
+	The Hypermedia Image Processing Reference 2,\\
+	2004
+
+\bibitem{pyparallel}
+	Markus Konrad,\\
+	\textit{Vectorization and parallelization in Python with NumPy and Pandas},\\
+	\texttt{https://datascience.blog.wzb.eu/2018/02/02/\\
+	vectorization-and-parallelization-in-python-with-numpy-and-pandas/},\\
+	2018
+
+\bibitem{mysoftware}
+	Julian Lüken,\\
+	Implementation des SUSAN Kantendetektors in Python 3,\\
+	\texttt{https://gitlab.gwdg.de/julian.lueken/susan/},\\
+	2019
+
+\bibitem{pyslow}
+	Jake Vanderplas,\\
+	\textit{Why Python is Slow: Looking Under the Hood},\\
+	\texttt{https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/},\\
+	2014
+
 \bibitem{SUSAN}
 	Stephen M. Smith, J. Michael Brady,\\
 	\textit{SUSAN - A New Approach to Low Level Image Processing},\\
@@ -1038,50 +1067,18 @@ Göttingen, den \today \hspace{2em}
 	\textit{Edge Thinning Used in the SUSAN Edge Detector},\\
 	Technical Report TR95SMS5,\\
 	1995
-
-\bibitem{gaussianblur}
-	Robert Fisher, Simon Perkins, Ashley Walker, Erik Wolfart,\\
-	\textit{Gaussian Smoothing},\\
-	The Hypermedia Image Processing Reference 2,\\
-	2004
 	
-\bibitem{pillow}
-	Pillow: the friendly PIL fork, \\
-	\texttt{https://python-pillow.org/}
+\bibitem{multiprocessing}
+	multiprocessing - Process-based parallelism, \\
+	\texttt{https://docs.python.org/3/library/multiprocessing.html}
 
 \bibitem{numpy}
 	NumPy,\\
 	\texttt{https://numpy.org/}
 
-\bibitem{multiprocessing}
-	multiprocessing - Process-based parallelism, \\
-	\texttt{https://docs.python.org/3/library/multiprocessing.html}
-
-\bibitem{pyslow}
-	Jake VanderPlas,\\
-	\textit{Why Python is Slow: Looking Under the Hood},\\
-	\texttt{https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/},\\
-	2014
-
-\bibitem{pyparallel}
-	Markus Konrad,\\
-	\textit{Vectorization and parallelization in Python with NumPy and Pandas},\\
-	\texttt{https://datascience.blog.wzb.eu/2018/02/02/\\
-	vectorization-and-parallelization-in-python-with-numpy-and-pandas/},\\
-	2018
-
-\bibitem{canny}
-	John Canny,\\
-	\emph{Finding lines and edges in images},\\
-	Technical Report TM-720,\\
-	Artificial Intelligence Laboratory, Massachusetts Institute of Technology,\\
-	1983
-
-\bibitem{mysoftware}
-	Julian Lüken,\\
-	Implementation des SUSAN Kantendetektors in Python 3,\\
-	\texttt{https://gitlab.gwdg.de/julian.lueken/susan/},\\
-	2019
+\bibitem{pillow}
+	Pillow: the friendly PIL fork, \\
+	\texttt{https://python-pillow.org/}
 
 \end{thebibliography}
 \pagebreak
